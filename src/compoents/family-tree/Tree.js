@@ -67,14 +67,14 @@ function Tree() {
 	const [canvas, setCanvas] = useState({
 		width: 100,
 		height: 100,
+		padding: 20,
 	});
 
 	// on load
 	useEffect(() => {
-		const padding = 20;
 		const newCanvas = {
-			width: window.innerWidth * 0.7 - padding,
-			height: window.innerHeight - padding,
+			width: window.innerWidth * 0.7 - canvas.padding,
+			height: window.innerHeight - canvas.padding,
 		};
 		setCanvas(newCanvas);
 	}, []);
@@ -154,8 +154,8 @@ function Tree() {
 			</div>
 			<div>
 				<Box
-					height={canvas.height + 20 + "px"}
-					width={canvas.width + 20 + "px"}
+					height={canvas.height + canvas.padding + "px"}
+					width={canvas.width + canvas.padding + "px"}
 					backgroundColor={"#ddd"}
 				>
 					{/* <FamilyTree /> */}

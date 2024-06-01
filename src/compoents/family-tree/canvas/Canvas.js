@@ -2,6 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import useCanvas from "./useCanvas";
 import { Box } from "@mui/material";
 
+const fam1X = 100,
+	fam2X = 300,
+	fam3X = 500,
+	fam4X = 700,
+	gen1Y = 50,
+	gen2Y = 150,
+	gen3Y = 250,
+	member = 50;
+
 const Canvas = ({ family, canvasSize }) => {
 	const [coords, setCoords] = useState({
 		clientCoords: { x: 0, y: 0 },
@@ -13,19 +22,85 @@ const Canvas = ({ family, canvasSize }) => {
 	});
 	const [items, setItems] = useState([
 		{
-			x: 100,
-			y: 50,
-			name: "EK",
-		},
-		{
-			x: 50,
-			y: 100,
-			name: "BK",
-		},
-		{
-			x: 150,
-			y: 100,
-			name: "KK",
+			x: fam3X - member,
+			y: gen1Y,
+			name: "MB",
+			partner: { x: fam3X + member, y: gen1Y, name: "WB" },
+			children: [
+				{
+					x: fam1X,
+					y: gen2Y,
+					name: "EK",
+					children: [
+						{
+							x: fam1X - member,
+							y: gen3Y,
+							name: "BK",
+						},
+						{
+							x: fam1X + member,
+							y: gen3Y,
+							name: "KK",
+						},
+					],
+				},
+				{
+					x: fam2X,
+					y: gen2Y,
+					name: "AA",
+					children: [
+						{
+							x: fam2X,
+							y: gen3Y,
+							name: "AA",
+						},
+					],
+				},
+				{
+					x: fam3X - member,
+					y: gen2Y,
+					name: "CR",
+					partner: {
+						x: fam3X + member,
+						y: gen2Y,
+						name: "TR",
+					},
+					children: [
+						{
+							x: fam3X - member * 1.5,
+							y: gen3Y,
+							name: "AR",
+						},
+						{
+							x: fam3X,
+							y: gen3Y,
+							name: "GR",
+						},
+						{
+							x: fam3X + member * 1.5,
+							y: gen3Y,
+							name: "NR",
+						},
+					],
+				},
+				{
+					x: fam4X - member,
+					y: gen2Y,
+					name: "BB",
+					partner: {
+						x: fam4X + member,
+						y: gen2Y,
+						name: "HB",
+					},
+					children: [
+						{
+							x: fam4X,
+							y: gen3Y,
+							name: "PB",
+						},
+					],
+				},
+			],
 		},
 	]);
 
@@ -43,20 +118,95 @@ const Canvas = ({ family, canvasSize }) => {
 		ctx.fillStyle = "#ffffff";
 		ctx.fillText(name, x, y);
 	};
+	const drawMember = (ctx, member) => {
+		drawDot(
+			ctx,
+			member.x + coords.center.x,
+			member.y + coords.center.y,
+			member.name
+		);
+	};
+	const drawLine = (ctx, x1, y1, x2, y2) => {
+		ctx.beginPath();
+		ctx.moveTo(x1 + coords.center.x, y1 + coords.center.y);
+		ctx.lineTo(x2 + coords.center.x, y2 + coords.center.y);
+		ctx.stroke();
+	};
+	const drawLineToPerson = (ctx, personA, personB) => {
+		drawLine(ctx, personA.x, personA.y, personB.x, personB.y);
+	};
+	const drawLineToChildrenWithPartner = (ctx, person, partner, children) => {
+		drawLineToChildren(
+			ctx,
+			{ x: (person.x + partner.x) / 2, y: person.y },
+			children
+		);
+	};
+	const drawLineToChildren = (ctx, mid, children) => {
+		const child1 = children[0];
+		if (children.length > 1) {
+			// more than 1 child, raise the bar
+			const midBarY = child1.y - 50;
 
+			// line straight down from parents
+			drawLine(ctx, mid.x, mid.y, mid.x, midBarY);
+
+			// bar across
+			drawLine(
+				ctx,
+				child1.x,
+				midBarY,
+				children[children.length - 1].x,
+				midBarY
+			);
+
+			// lines down to each child
+			children.forEach((child) => {
+				drawLine(ctx, child.x, midBarY, child.x, child.y);
+			});
+		} else {
+			// single child, draw line straight down
+			drawLine(ctx, mid.x, mid.y, mid.x, child1.y);
+		}
+	};
+
+	const beginDrawMember = (ctx, member) => {
+		drawMember(ctx, member);
+
+		// partner
+		if (member.partner) {
+			drawLineToPerson(ctx, member, member.partner);
+			drawMember(ctx, member.partner);
+		}
+		// partner and child lines
+		if (member.partner && member.children) {
+			drawLineToChildrenWithPartner(
+				ctx,
+				member,
+				member.partner,
+				member.children
+			);
+		} else if (member.children) {
+			drawLineToChildren(ctx, member, member.children);
+		}
+		// children
+		if (member.children) {
+			member.children.forEach((itemChild, j) => {
+				//drawMember(ctx, itemChild);
+				beginDrawMember(ctx, itemChild);
+			});
+		}
+	};
+
+	// ////
 	// draw
 	const draw = (ctx, frameCount) => {
 		// clear each frame
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
 		// items
-		items.forEach((item) => {
-			drawDot(
-				ctx,
-				item.x + coords.center.x,
-				item.y + coords.center.y,
-				item.name
-			);
+		items.forEach((item, i) => {
+			beginDrawMember(ctx, item);
 		});
 	};
 

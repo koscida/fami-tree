@@ -2,6 +2,44 @@ import { useEffect, useState } from "react";
 import Canvas from "./Canvas";
 import { Box } from "@mui/material";
 
+// draw helpers
+const drawSquare = (ctx, x, y, w, h, color = null) => {
+	// square
+	ctx.beginPath();
+
+	ctx.fillStyle = color ? color : "pink";
+
+	ctx.lineWidth = "0";
+	ctx.strokeStyle = "none";
+	ctx.stroke();
+
+	ctx.fillRect(x, y, w, h);
+};
+const drawLine = (ctx, x1, y1, x2, y2) => {
+	ctx.beginPath();
+
+	ctx.strokeStyle = "#bbb";
+	ctx.lineWidth = 0.5;
+
+	ctx.moveTo(x1, y1);
+	ctx.lineTo(x2, y2);
+
+	ctx.stroke();
+};
+const drawGradient = (ctx, x1, y1, x2, y2, direction, colorStops) => {
+	var gradient =
+		direction === "vertical"
+			? ctx.createLinearGradient(x1, y1, x1, y2)
+			: ctx.createLinearGradient(x1, y1, x2, y1);
+	colorStops.forEach((colorStop) =>
+		gradient.addColorStop(colorStop.offset, colorStop.color)
+	);
+
+	// Apply gradient to canvas
+	ctx.fillStyle = gradient;
+	ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+};
+
 const defaultColor = "#ff000022";
 
 export default function Colors() {
@@ -28,6 +66,7 @@ export default function Colors() {
 		isDragging: false,
 		hoverColor: defaultColor,
 		selectedColor: defaultColor,
+		pastColors: [],
 	});
 	const [cells, setCells] = useState([]);
 
@@ -53,8 +92,8 @@ export default function Colors() {
 		const y1 = 0 + picker.meta.padding + picker.meta.scrollPadding;
 		const meta = {
 			...picker.meta,
-			x: canvasSize.w - picker.meta.w,
-			y: 0,
+			x: x1 - picker.meta.padding,
+			y: y1 + picker.meta.padding,
 			x1,
 			y1,
 			x2: x1 + picker.meta.w,
@@ -69,47 +108,6 @@ export default function Colors() {
 		);
 		setCells(newCells);
 	}, []);
-
-	// draw helpers
-	const drawSquare = (ctx, x, y, w, h, color = null) => {
-		// square
-		ctx.beginPath();
-
-		ctx.fillStyle = color ? color : "pink";
-
-		ctx.lineWidth = "0";
-		ctx.strokeStyle = "none";
-		ctx.stroke();
-
-		ctx.fillRect(x, y, w, h);
-	};
-	const drawBlock = (ctx, x, y, color = null) => {
-		drawSquare(ctx, x, y, canvasInfo.cellSize, canvasInfo.cellSize, color);
-	};
-	const drawLine = (ctx, x1, y1, x2, y2) => {
-		ctx.beginPath();
-
-		ctx.strokeStyle = "#bbb";
-		ctx.lineWidth = 0.5;
-
-		ctx.moveTo(x1, y1);
-		ctx.lineTo(x2, y2);
-
-		ctx.stroke();
-	};
-	const drawGradient = (ctx, x1, y1, x2, y2, direction, colorStops) => {
-		var gradient =
-			direction === "vertical"
-				? ctx.createLinearGradient(x1, y1, x1, y2)
-				: ctx.createLinearGradient(x1, y1, x2, y1);
-		colorStops.forEach((colorStop) =>
-			gradient.addColorStop(colorStop.offset, colorStop.color)
-		);
-
-		// Apply gradient to canvas
-		ctx.fillStyle = gradient;
-		ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-	};
 
 	//
 	// common
@@ -134,6 +132,9 @@ export default function Colors() {
 				i * canvasInfo.cellSize
 			);
 		});
+	};
+	const drawBlock = (ctx, x, y, color = null) => {
+		drawSquare(ctx, x, y, canvasInfo.cellSize, canvasInfo.cellSize, color);
 	};
 
 	// ////
@@ -175,32 +176,33 @@ export default function Colors() {
 		// selected color
 		const selectedH = 20;
 		const selectedHPad = selectedH + padding;
+		const selectedY = y2 + padding;
 
 		// background
-		drawSquare(
-			ctx,
-			x1 - padding,
-			y2 + padding,
-			pickWPad,
-			selectedHPad,
-			color
-		);
+		drawSquare(ctx, x1 - padding, selectedY, pickWPad, selectedHPad, color);
 
 		// selected (first place)
 		drawSquare(
 			ctx,
 			x1,
-			y2 + padding,
+			selectedY,
 			selectedH,
 			selectedH,
 			picker.selectedColor
 		);
 
+		// past selected (second - seventh place)
+		let pastX = x1;
+		picker.pastColors.forEach((color) => {
+			pastX += selectedHPad;
+			drawSquare(ctx, pastX, selectedY, selectedH, selectedH, color);
+		});
+
 		// mouse move (last place)
 		drawSquare(
 			ctx,
 			x2 - selectedH,
-			y2 + padding,
+			selectedY,
 			selectedH,
 			selectedH,
 			picker.hoverColor
@@ -214,16 +216,29 @@ export default function Colors() {
 		const x = Math.floor(clientX / canvasInfo.cellSize);
 		const y = Math.floor(clientY / canvasInfo.cellSize);
 
+		let { isDragging, hoverColor, selectedColor, pastColors } = picker;
+
 		// set new position
 		const pos = { x, y };
 
-		// set dragging
-		const isDragging =
-			event.type === "mousedown" ||
-			(event.type === "mousemove" && picker.isDragging);
+		// if dragging
+		if (
+			(event.type === "mousedown" ||
+				(event.type === "mousemove" && picker.isDragging)) &&
+			(clientX < picker.meta.x || clientY > picker.meta.y)
+		) {
+			// set dragging
+			isDragging = true;
+			// if entering a new block
+			if (picker.pos.x !== x || picker.pos.y !== y) {
+				// add block to cell
+				addBlock(x, y, selectedColor);
+			}
+		} else {
+			isDragging = false;
+		}
 
 		// if in color picker
-		let { hoverColor, selectedColor } = picker;
 		if (
 			clientX >= picker.meta.x1 &&
 			clientX <= picker.meta.x2 &&
@@ -235,17 +250,23 @@ export default function Colors() {
 
 			// select color
 			if (event.type === "mousedown") {
+				// move last selected to pastColors
+				pastColors = [selectedColor, ...pastColors].slice(0, 6);
+
+				// select new color
 				selectedColor = hoverColor;
 			}
 		}
 
 		// update picker
-		setPicker({ ...picker, pos, hoverColor, isDragging, selectedColor });
-
-		// add block to cell
-		if (isDragging && (picker.pos.x !== x || picker.pos.y !== y)) {
-			addBlock(x, y, selectedColor);
-		}
+		setPicker({
+			...picker,
+			pos,
+			hoverColor,
+			isDragging,
+			selectedColor,
+			pastColors,
+		});
 	};
 
 	const getColorFromPos = ({ x, y }) => {
@@ -324,8 +345,6 @@ export default function Colors() {
 	const draw = (ctx) => {
 		drawGrid(ctx);
 
-		drawColorPicker(ctx);
-
 		cells.forEach((cellRow, i) =>
 			cellRow.forEach((cell, j) =>
 				cell.forEach((block) =>
@@ -338,6 +357,8 @@ export default function Colors() {
 				)
 			)
 		);
+
+		drawColorPicker(ctx);
 	};
 
 	// render
