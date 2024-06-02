@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import useCanvas from "./useCanvas";
 import { Box } from "@mui/material";
-
-const fam1X = 100,
-	fam2X = 300,
-	fam3X = 500,
-	fam4X = 700,
-	gen1Y = 50,
-	gen2Y = 150,
-	gen3Y = 250,
-	member = 50;
+import { canvasDrawDot, canvasDrawLine } from "./functions";
+import loadDefault from "../family-member/defaultFamilyMembers";
+import FamilyFactory from "../family-member/FamilyFactory";
+import {
+	PartnerRelationship,
+	ParentSingleRelationship,
+	ParentPartnerRelationship,
+	SiblingGroupRelationship,
+	SiblingParentSingleRelationship,
+	SiblingParentPartnerRelationship,
+} from "../family-member/FamilyRelationship";
 
 const Canvas = ({ family, canvasSize }) => {
 	const [coords, setCoords] = useState({
@@ -20,118 +22,29 @@ const Canvas = ({ family, canvasSize }) => {
 		isDragging: false,
 		dragCoords: [],
 	});
-	const [items, setItems] = useState([
-		{
-			x: fam3X - member,
-			y: gen1Y,
-			name: "MB",
-			partner: { x: fam3X + member, y: gen1Y, name: "WB" },
-			children: [
-				{
-					x: fam1X,
-					y: gen2Y,
-					name: "EK",
-					children: [
-						{
-							x: fam1X - member,
-							y: gen3Y,
-							name: "BK",
-						},
-						{
-							x: fam1X + member,
-							y: gen3Y,
-							name: "KK",
-						},
-					],
-				},
-				{
-					x: fam2X,
-					y: gen2Y,
-					name: "AA",
-					children: [
-						{
-							x: fam2X,
-							y: gen3Y,
-							name: "AA",
-						},
-					],
-				},
-				{
-					x: fam3X - member,
-					y: gen2Y,
-					name: "CR",
-					partner: {
-						x: fam3X + member,
-						y: gen2Y,
-						name: "TR",
-					},
-					children: [
-						{
-							x: fam3X - member * 1.5,
-							y: gen3Y,
-							name: "AR",
-						},
-						{
-							x: fam3X,
-							y: gen3Y,
-							name: "GR",
-						},
-						{
-							x: fam3X + member * 1.5,
-							y: gen3Y,
-							name: "NR",
-						},
-					],
-				},
-				{
-					x: fam4X - member,
-					y: gen2Y,
-					name: "BB",
-					partner: {
-						x: fam4X + member,
-						y: gen2Y,
-						name: "HB",
-					},
-					children: [
-						{
-							x: fam4X,
-							y: gen3Y,
-							name: "PB",
-						},
-					],
-				},
-			],
-		},
-	]);
+
+	let famFac = new FamilyFactory();
+	let { members, relationships } = loadDefault(famFac);
 
 	// draw helpers
-	const drawDot = (ctx, x, y, name) => {
-		// circle
-		// ctx.arc(x, y, radius, startAngle, endAngle, [counterclockwise])
-		ctx.fillStyle = "#000000";
-		ctx.beginPath();
-		ctx.arc(x, y, 20, 0, 2 * Math.PI);
-		ctx.fill();
-
-		// name
-		// ctx.fillText(text, x, y, [maxwidth])
-		ctx.fillStyle = "#ffffff";
-		ctx.fillText(name, x, y);
-	};
 	const drawMember = (ctx, member) => {
-		drawDot(
+		canvasDrawDot(
 			ctx,
 			member.x + coords.center.x,
 			member.y + coords.center.y,
-			member.name
+			member.abbr
 		);
 	};
 	const drawLine = (ctx, x1, y1, x2, y2) => {
-		ctx.beginPath();
-		ctx.moveTo(x1 + coords.center.x, y1 + coords.center.y);
-		ctx.lineTo(x2 + coords.center.x, y2 + coords.center.y);
-		ctx.stroke();
+		canvasDrawLine(
+			ctx,
+			x1 + coords.center.x,
+			y1 + coords.center.y,
+			x2 + coords.center.x,
+			y2 + coords.center.y
+		);
 	};
+	//
 	const drawLineToPerson = (ctx, personA, personB) => {
 		drawLine(ctx, personA.x, personA.y, personB.x, personB.y);
 	};
@@ -170,31 +83,32 @@ const Canvas = ({ family, canvasSize }) => {
 		}
 	};
 
+	//
 	const beginDrawMember = (ctx, member) => {
 		drawMember(ctx, member);
-
-		// partner
-		if (member.partner) {
-			drawLineToPerson(ctx, member, member.partner);
-			drawMember(ctx, member.partner);
-		}
-		// partner and child lines
-		if (member.partner && member.children) {
+	};
+	const beginDrawRelationship = (ctx, rel) => {
+		if (rel instanceof PartnerRelationship) {
+			drawLineToPerson(ctx, rel.memberA, rel.memberB);
+		} else if (rel instanceof ParentSingleRelationship) {
+			drawLineToPerson(ctx, rel.memberA, rel.memberB);
+		} else if (rel instanceof ParentPartnerRelationship) {
 			drawLineToChildrenWithPartner(
 				ctx,
-				member,
-				member.partner,
-				member.children
+				rel.relationship.memberA,
+				rel.relationship.memberB,
+				[rel.memberA]
 			);
-		} else if (member.children) {
-			drawLineToChildren(ctx, member, member.children);
-		}
-		// children
-		if (member.children) {
-			member.children.forEach((itemChild, j) => {
-				//drawMember(ctx, itemChild);
-				beginDrawMember(ctx, itemChild);
-			});
+		} else if (rel instanceof SiblingGroupRelationship) {
+		} else if (rel instanceof SiblingParentSingleRelationship) {
+			drawLineToChildren(ctx, rel.parent, rel.siblingGroup.siblingGroup);
+		} else if (rel instanceof SiblingParentPartnerRelationship) {
+			drawLineToChildrenWithPartner(
+				ctx,
+				rel.relationship.memberA,
+				rel.relationship.memberB,
+				rel.siblingGroup.siblingGroup
+			);
 		}
 	};
 
@@ -204,9 +118,14 @@ const Canvas = ({ family, canvasSize }) => {
 		// clear each frame
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-		// items
-		items.forEach((item, i) => {
-			beginDrawMember(ctx, item);
+		// members
+		members.forEach((member, i) => {
+			beginDrawMember(ctx, member);
+		});
+
+		// relationships
+		relationships.forEach((relationship) => {
+			beginDrawRelationship(ctx, relationship);
 		});
 	};
 
@@ -295,7 +214,7 @@ const Canvas = ({ family, canvasSize }) => {
 					x: event.layerX,
 					y: event.layerY,
 				};
-				const itemSelected = items.filter((item) => {
+				const itemSelected = members.filter((item) => {
 					return (
 						item.x + coords.center.x - 5 <= click.x &&
 						item.x + coords.center.x + 20 + 5 >= click.x &&
