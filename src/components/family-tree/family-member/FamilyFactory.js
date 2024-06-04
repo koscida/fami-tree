@@ -12,6 +12,8 @@ export default class FamilyFactory {
 	}
 
 	addMember(member) {
+		const newId = this.members.length;
+		member.id = newId;
 		this.members.push(member);
 	}
 	addRelationship(relationship) {

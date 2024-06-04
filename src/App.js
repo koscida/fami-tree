@@ -1,7 +1,7 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Tree from "./components/family-tree/Tree";
 import Colors from "./components/colors/Colors";
-import FamilyMap from "./components/family-tree/family-member/FamilyMap";
+import ViewFamilyMap from "./components/family-tree/family-member/ViewFamilyMap";
 
 function App() {
 	const router = createBrowserRouter([
@@ -11,7 +11,7 @@ function App() {
 		},
 		{
 			path: "/family-map",
-			element: <FamilyMap />,
+			element: <ViewFamilyMap />,
 		},
 		{
 			path: "/colors",

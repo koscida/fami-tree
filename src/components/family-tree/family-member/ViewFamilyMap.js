@@ -1,7 +1,7 @@
 import FamilyFactory from "./FamilyFactory";
 import loadDefault from "./defaultFamilyMembers";
 
-export default function FamilyMap() {
+export default function ViewFamilyMap() {
 	let famFac = new FamilyFactory();
 	let { members, relationships } = loadDefault(famFac);
 

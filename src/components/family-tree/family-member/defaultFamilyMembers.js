@@ -1,12 +1,5 @@
 import FamilyMember from "./FamilyMember";
-import {
-	ParentPartnerRelationship,
-	ParentSingleRelationship,
-	PartnerRelationship,
-	SiblingGroupRelationship,
-	SiblingParentSingleRelationship,
-	SiblingParentPartnerRelationship,
-} from "./FamilyRelationship";
+import FamilyGroup from "./FamilyGroup";
 
 // consts
 const fam1X = 100,
@@ -23,113 +16,115 @@ export default function loadDefault(famFac) {
 	// grandparents
 
 	// person 1 (grandparent)
-	const a1 = new FamilyMember(1, fam3X - member, gen1Y, "", "", "MB");
+	const a1 = new FamilyMember(fam3X - member, gen1Y, "M", "B", "MB");
 	famFac.addMember(a1);
 
 	// person 2 (grandparent)
-	const a2 = new FamilyMember(2, fam3X + member, gen1Y, "", "", "WB");
+	const a2 = new FamilyMember(fam3X + member, gen1Y, "W", "B", "WB");
 	famFac.addMember(a2);
-	// relationship (grandparent-grandparent)
-	const ra1 = new PartnerRelationship(a1, a2);
-	famFac.addRelationship(ra1);
 
 	// ////
 	// fam 1
 
 	// person 3 (parent)
-	const b1 = new FamilyMember(3, fam1X, gen2Y, "", "", "EK");
+	const b1 = new FamilyMember(fam1X, gen2Y, "E", "K", "EK");
 	famFac.addMember(b1);
 
 	// person 4 (child)
-	const b2 = new FamilyMember(4, fam1X - member, gen3Y, "", "", "BK");
+	const b2 = new FamilyMember(fam1X - member, gen3Y, "B", "K", "BK");
 	famFac.addMember(b2);
 
 	// person 5 (child)
-	const b3 = new FamilyMember(5, fam1X + member, gen3Y, "", "", "KK");
+	const b3 = new FamilyMember(fam1X + member, gen3Y, "K", "K", "KK");
 	famFac.addMember(b3);
-	// relationships (sibling group)
-	const bs1 = new SiblingGroupRelationship();
-	bs1.addSibling(b2);
-	bs1.addSibling(b3);
-	famFac.addRelationship(bs1);
-	// relationships (sibling group-parent)
-	famFac.addRelationship(new SiblingParentSingleRelationship(bs1, b1));
+
+	// relationships (sibling group + parent)
+	const fgb1 = new FamilyGroup();
+	fgb1.addParent(b1);
+	fgb1.addChild(b2);
+	fgb1.addChild(b3);
+	famFac.addRelationship(fgb1);
 
 	// ////
 	// fam 2
 
 	// person 6 (parent)
-	const c1 = new FamilyMember(6, fam2X, gen2Y, "", "", "AA");
+	const c1 = new FamilyMember(fam2X, gen2Y, "A", "A", "AA");
 	famFac.addMember(c1);
 
 	// person 7 (child)
-	const c2 = new FamilyMember(7, fam2X, gen3Y, "", "", "AB");
+	const c2 = new FamilyMember(fam2X, gen3Y, "A", "B", "AB");
 	famFac.addMember(c2);
+
 	// relationships (child-parent)
-	famFac.addRelationship(new ParentSingleRelationship(c2, c1));
+	const fgc1 = new FamilyGroup();
+	fgc1.addParent(c1);
+	fgc1.addChild(c2);
+	famFac.addRelationship(fgc1);
 
 	// ////
 	// fam 3
 
 	// person 8 (parent)
-	const d1 = new FamilyMember(8, fam3X - member, gen2Y, "", "", "CR");
+	const d1 = new FamilyMember(fam3X - member, gen2Y, "C", "R", "CR");
 	famFac.addMember(d1);
 
 	// person 9 (parent partner)
-	const d2 = new FamilyMember(9, fam3X + member, gen2Y, "", "", "TR");
+	const d2 = new FamilyMember(fam3X + member, gen2Y, "T", "R", "TR");
 	famFac.addMember(d2);
-	// relationships (parent-parent)
-	const rd1 = new PartnerRelationship(d1, d2);
-	famFac.addRelationship(rd1);
 
 	// person 10 (child)
-	const d3 = new FamilyMember(10, fam3X - member * 2, gen3Y, "", "", "AR");
+	const d3 = new FamilyMember(fam3X - member * 2, gen3Y, "A", "R", "AR");
 	famFac.addMember(d3);
 
 	// person 11 (child)
-	const d4 = new FamilyMember(11, fam3X, gen3Y, "", "", "GR");
+	const d4 = new FamilyMember(fam3X, gen3Y, "G", "R", "GR");
 	famFac.addMember(d4);
 
 	// person 12 (child)
-	const d5 = new FamilyMember(12, fam3X + member * 2, gen3Y, "", "", "NR");
+	const d5 = new FamilyMember(fam3X + member * 2, gen3Y, "N", "R", "NR");
 	famFac.addMember(d5);
-	// relationships (sibling group)
-	const ds1 = new SiblingGroupRelationship();
-	ds1.addSibling(d3);
-	ds1.addSibling(d4);
-	ds1.addSibling(d5);
-	famFac.addRelationship(ds1);
-	// relationships (sibling group-parent)
-	famFac.addRelationship(new SiblingParentPartnerRelationship(ds1, rd1));
+
+	// relationships (sibling group + parent group)
+	const fgd1 = new FamilyGroup();
+	fgd1.addParent(d1);
+	fgd1.addParent(d2);
+	fgd1.addChild(d3);
+	fgd1.addChild(d4);
+	fgd1.addChild(d5);
+	famFac.addRelationship(fgd1);
 
 	// ////
 	// fam 4
 
 	// person 13 (parent)
-	const e1 = new FamilyMember(13, fam4X - member, gen2Y, "", "", "BB");
+	const e1 = new FamilyMember(fam4X - member, gen2Y, "B", "B", "BB");
 	famFac.addMember(e1);
-	// relationships (sibling group)
-	const as1 = new SiblingGroupRelationship();
-	as1.addSibling(b1);
-	as1.addSibling(c1);
-	as1.addSibling(d1);
-	as1.addSibling(e1);
-	famFac.addRelationship(as1);
-	// relationships (sibling group-grandparent)
-	famFac.addRelationship(new SiblingParentPartnerRelationship(as1, ra1));
 
 	// person 14 (parent partner)
-	const e2 = new FamilyMember(14, fam4X + member, gen2Y, "", "", "HB");
+	const e2 = new FamilyMember(fam4X + member, gen2Y, "H", "B", "HB");
 	famFac.addMember(e2);
-	// relationships (parent-parent)
-	const re1 = new PartnerRelationship(e1, e2);
-	famFac.addRelationship(re1);
 
 	// person 15 (child)
-	const e3 = new FamilyMember(15, fam4X, gen3Y, "", "", "PB");
+	const e3 = new FamilyMember(fam4X, gen3Y, "P", "B", "PB");
 	famFac.addMember(e3);
+
 	// relationships (child-parent relationship)
-	famFac.addRelationship(new ParentPartnerRelationship(e3, re1));
+	const fge1 = new FamilyGroup();
+	fge1.addParent(e1);
+	fge1.addParent(e2);
+	fge1.addChild(e3);
+	famFac.addRelationship(fge1);
+
+	// relationship (grandparent + grandparent)
+	const fga1 = new FamilyGroup();
+	fga1.addParent(a1);
+	fga1.addParent(a2);
+	fga1.addChild(b1);
+	fga1.addChild(c1);
+	fga1.addChild(d1);
+	fga1.addChild(e1);
+	famFac.addRelationship(fga1);
 
 	// ////
 	// return

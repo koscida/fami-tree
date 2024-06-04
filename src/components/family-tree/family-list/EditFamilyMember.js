@@ -15,9 +15,15 @@ import MonthPicker from "./MonthPicker";
 import YearPicker from "./YearPicker";
 import DayPicker from "./DayPicker";
 import { useState } from "react";
+import AddFamilyMember from "./AddFamilyMember";
 
-export default function FamilyMember({ data, handleSave, handleCancel }) {
+export default function EditFamilyMember({ data, handleSave, handleCancel }) {
 	const [dataTemp, setDataTemp] = useState(data);
+	const [addingFamily, setAddingFamily] = useState({
+		isAdding: null,
+	});
+
+	const isNew = data.id ? false : true;
 
 	// handlers
 	const handleNameValueChange = (e) => {
@@ -39,10 +45,34 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 		handleSave(dataTemp);
 	};
 
+	// styles
+	const rowStyles = { display: "flex", gap: "0.5rem", padding: "0.5rem" };
+
 	// render
 	return (
 		<Box>
-			<Box display={"flex"} gap={"0.5rem"} padding={"0.5rem"}>
+			{/* NAME */}
+
+			<Box sx={rowStyles}>
+				<h2>{isNew ? <></> : data.fullName}</h2>
+			</Box>
+
+			{/* ADD FAMILY MEMBER */}
+
+			{isNew ? (
+				<></>
+			) : (
+				<Box sx={rowStyles}>
+					<AddFamilyMember
+						addingFamily={addingFamily}
+						setAddingFamily={setAddingFamily}
+					/>
+				</Box>
+			)}
+
+			{/* ALL ALIVE FIELDS */}
+
+			<Box sx={rowStyles}>
 				{/* Name */}
 
 				<TextField
@@ -70,9 +100,17 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 					name={"lastName"}
 					onChange={handleNameValueChange}
 				/>
+				<TextField
+					id="abbr"
+					label="Abbr"
+					variant="outlined"
+					value={dataTemp.abbr}
+					name={"abbr"}
+					onChange={handleNameValueChange}
+				/>
 			</Box>
 
-			<Box display={"flex"} gap={"0.5rem"} padding={"0.5rem"}>
+			<Box sx={rowStyles}>
 				{/* Gender */}
 				<Box>
 					<FormControl>
@@ -134,18 +172,18 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 			</Box>
 
 			{/* Birth */}
-			<Box gap={"0.5rem"} padding={"0.5rem"}>
+			<Box sx={rowStyles}>
 				<TextField
 					id="birth-place"
 					label="Birth Place"
 					variant="outlined"
 					name="birthPlace"
 					value={dataTemp.birthPlace}
-					handleChange={handleNameValueChange}
+					onChange={handleNameValueChange}
 				/>
 			</Box>
 			{/* Birth Date */}
-			<Box display={"flex"} gap={"0.5rem"} padding={"0.5rem"}>
+			<Box sx={rowStyles}>
 				<MonthPicker
 					name={"birthMonth"}
 					value={dataTemp.birthMonth}
@@ -163,10 +201,11 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 				/>
 			</Box>
 
+			{/* ALL DECEASED FIELDS */}
 			{dataTemp.deceased ? (
 				<>
 					{/* Death */}
-					<Box padding={"0.5rem"}>
+					<Box sx={rowStyles}>
 						<TextField
 							id="death-place"
 							label="Death Place"
@@ -178,7 +217,7 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 					</Box>
 
 					{/* Death Date */}
-					<Box display={"flex"} gap={"0.5rem"} padding={"0.5rem"}>
+					<Box sx={rowStyles}>
 						<MonthPicker
 							name={"deathMonth"}
 							value={dataTemp.deathMonth}
@@ -197,7 +236,7 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 					</Box>
 
 					{/* Burial */}
-					<Box display={"flex"} gap={"0.5rem"} padding={"0.5rem"}>
+					<Box sx={rowStyles}>
 						<TextField
 							id="burial-place"
 							label="Burial Place"
@@ -220,7 +259,7 @@ export default function FamilyMember({ data, handleSave, handleCancel }) {
 				<></>
 			)}
 
-			{/* Save */}
+			{/* SAVE */}
 			<Box>
 				<Button onClick={handleOnSave}>Save</Button>
 				<Button onClick={handleCancel}>Cancel</Button>

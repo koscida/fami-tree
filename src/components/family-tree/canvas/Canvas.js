@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import useCanvas from "./useCanvas";
 import { Box } from "@mui/material";
-import { canvasDrawDot, canvasDrawLine } from "./functions";
+import { canvasDrawLine } from "./functions";
 import loadDefault from "../family-member/defaultFamilyMembers";
 import FamilyFactory from "../family-member/FamilyFactory";
-import {
-	PartnerRelationship,
-	ParentSingleRelationship,
-	ParentPartnerRelationship,
-	SiblingGroupRelationship,
-	SiblingParentSingleRelationship,
-	SiblingParentPartnerRelationship,
-} from "../family-member/FamilyRelationship";
+import FamilyGroup from "../family-member/FamilyGroup";
 
-const Canvas = ({ family, canvasSize }) => {
+const Canvas = ({
+	familyList,
+	setFamilyList,
+	relationships,
+	canvasSize,
+	selectedId,
+	setSelectedId,
+}) => {
 	const [coords, setCoords] = useState({
 		clientCoords: { x: 0, y: 0 },
 		layerCoords: { x: 0, y: 0 },
@@ -21,19 +21,15 @@ const Canvas = ({ family, canvasSize }) => {
 		center: { x: 0, y: 0 },
 		isDragging: false,
 		dragCoords: [],
+		lastType: null,
+		isClicking: false,
 	});
-
-	let famFac = new FamilyFactory();
-	let { members, relationships } = loadDefault(famFac);
 
 	// draw helpers
 	const drawMember = (ctx, member) => {
-		canvasDrawDot(
-			ctx,
-			member.x + coords.center.x,
-			member.y + coords.center.y,
-			member.abbr
-		);
+		selectedId && selectedId === member.id
+			? member.drawMemberSelected(ctx, coords.center)
+			: member.drawMember(ctx, coords.center);
 	};
 	const drawLine = (ctx, x1, y1, x2, y2) => {
 		canvasDrawLine(
@@ -84,31 +80,40 @@ const Canvas = ({ family, canvasSize }) => {
 	};
 
 	//
-	const beginDrawMember = (ctx, member) => {
-		drawMember(ctx, member);
-	};
 	const beginDrawRelationship = (ctx, rel) => {
-		if (rel instanceof PartnerRelationship) {
-			drawLineToPerson(ctx, rel.memberA, rel.memberB);
-		} else if (rel instanceof ParentSingleRelationship) {
-			drawLineToPerson(ctx, rel.memberA, rel.memberB);
-		} else if (rel instanceof ParentPartnerRelationship) {
-			drawLineToChildrenWithPartner(
-				ctx,
-				rel.relationship.memberA,
-				rel.relationship.memberB,
-				[rel.memberA]
-			);
-		} else if (rel instanceof SiblingGroupRelationship) {
-		} else if (rel instanceof SiblingParentSingleRelationship) {
-			drawLineToChildren(ctx, rel.parent, rel.siblingGroup.siblingGroup);
-		} else if (rel instanceof SiblingParentPartnerRelationship) {
-			drawLineToChildrenWithPartner(
-				ctx,
-				rel.relationship.memberA,
-				rel.relationship.memberB,
-				rel.siblingGroup.siblingGroup
-			);
+		const { parentGroup, childGroup } = rel;
+
+		// draw line from parent-to-parent
+		if (parentGroup) {
+			parentGroup.forEach((parent, i) => {
+				if (i > 0) drawLineToPerson(ctx, parentGroup[i - 1], parent);
+			});
+		} else {
+			// draw simple parent if sibling group
+			if (childGroup && childGroup.length > 1) {
+				// TODO: draw stub
+			}
+		}
+
+		// draw sibling groups
+		if (childGroup && parentGroup) {
+			// single parent with single child
+			if (parentGroup.length === 1 && childGroup.length === 1) {
+				drawLineToPerson(ctx, childGroup[0], parentGroup[0]);
+			}
+			// single parent with multiple children
+			else if (parentGroup.length === 1 && childGroup.length > 1) {
+				drawLineToChildren(ctx, parentGroup[0], childGroup);
+			}
+			// partners with single child
+			else if (parentGroup.length > 1) {
+				drawLineToChildrenWithPartner(
+					ctx,
+					parentGroup[0],
+					parentGroup[1],
+					childGroup
+				);
+			}
 		}
 	};
 
@@ -119,8 +124,8 @@ const Canvas = ({ family, canvasSize }) => {
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
 		// members
-		members.forEach((member, i) => {
-			beginDrawMember(ctx, member);
+		familyList.forEach((member, i) => {
+			drawMember(ctx, member);
 		});
 
 		// relationships
@@ -131,52 +136,34 @@ const Canvas = ({ family, canvasSize }) => {
 
 	//
 	// set-up canvas
-	const useCanvas = (draw) => {
-		const canvasRef = useRef(null);
-
-		useEffect(() => {
-			const canvas = canvasRef.current;
-			const context = canvas.getContext("2d");
-
-			canvas.width = canvasSize.width;
-			canvas.height = canvasSize.height;
-
-			let frameCount = 0;
-			let animationFrameId;
-
-			// listeners
+	const handleInteraction = (event) => {
+		const { clientX, clientY, layerX, layerY, type } = event;
+		// listeners
+		if (event.target.nodeName === "CANVAS") {
+			let { prev, center, isDragging, isClicking, dragCoords, lastType } =
+				coords;
+			const layerCoords = { x: layerX, y: layerY };
+			const clientCoords = { x: clientX, y: clientY };
+			console.log("--handleInteraction-- type: ", type);
 
 			// start drag
-			const handleWindowMouseDown = (event) => {
-				setCoords({
-					...coords,
-					dragCoords: [
-						{
-							x: event.layerX,
-							y: event.layerY,
-						},
-					],
-					isDragging: true,
-				});
-			};
+			if (type === "mousedown") {
+				dragCoords = [layerCoords];
+				// turn on clicking and dragging
+				isClicking = true;
+				isDragging = true;
+			}
+
 			// dragging
-			const handleWindowMouseMove = (event) => {
-				const clientCoords = {
-					x: event.clientX,
-					y: event.clientY,
-				};
-				const layerCoords = {
-					x: event.layerX,
-					y: event.layerY,
-				};
-				const prev = coords.layerCoords;
+			if (type === "mousemove") {
+				prev = coords.layerCoords;
+				// is dragging, so turn off clicking
+				isClicking = false;
 
-				let center = coords.center;
-
-				if (coords.isDragging) {
+				if (isDragging) {
 					center = {
-						x: coords.center.x - (prev.x - layerCoords.x),
-						y: coords.center.y - (prev.y - layerCoords.y),
+						x: center.x - (prev.x - layerCoords.x),
+						y: center.y - (prev.y - layerCoords.y),
 					};
 				}
 				if (center.x <= -canvasSize.width) center.x = -canvasSize.width;
@@ -184,80 +171,52 @@ const Canvas = ({ family, canvasSize }) => {
 					center.y = -canvasSize.height;
 				if (center.x >= 10000) center.x = 10000;
 				if (center.y >= 10000) center.y = 10000;
+			}
 
-				setCoords({
-					...coords,
-					clientCoords,
-					layerCoords,
-					center,
-					prev,
-				});
-			};
 			// stop drag
-			const handleWindowMouseUp = (event) => {
-				setCoords({
-					...coords,
-					dragCoords: [
-						...coords.dragCoords,
-						{
-							x: event.layerX,
-							y: event.layerY,
-						},
-					],
-					isDragging: false,
-				});
-			};
+			if (type === "mouseup") {
+				dragCoords = [...dragCoords, layerCoords];
+				// turn off dragging
+				isDragging = false;
+			}
+
 			// click item
-			const handleWindowClick = (event) => {
-				console.log(event);
-				const click = {
-					x: event.layerX,
-					y: event.layerY,
-				};
-				const itemSelected = members.filter((item) => {
+			if (type === "click" && isClicking && !isDragging) {
+				// turn off clicking
+				isClicking = false;
+				const itemSelected = familyList.filter((mem) => {
 					return (
-						item.x + coords.center.x - 5 <= click.x &&
-						item.x + coords.center.x + 20 + 5 >= click.x &&
-						item.y + coords.center.y - 5 <= click.y &&
-						item.y + coords.center.y + 20 + 5 >= click.y
+						mem.x + center.x - 5 <= layerCoords.x &&
+						mem.x + center.x + 20 + 5 >= layerCoords.x &&
+						mem.y + center.y - 5 <= layerCoords.y &&
+						mem.y + center.y + 20 + 5 >= layerCoords.y
 					);
 				});
-				console.log("itemSelected: ", itemSelected, " click: ", click);
-			};
-
-			// group all listeners
-			const listeners = [
-				{ name: "mousedown", handler: handleWindowMouseDown },
-				{ name: "mousemove", handler: handleWindowMouseMove },
-				{ name: "mouseup", handler: handleWindowMouseUp },
-
-				{ name: "click", handler: handleWindowClick },
-			];
-			// add listeners
-			listeners.forEach(({ name, handler }) =>
-				window.addEventListener(name, handler)
-			);
-
-			// render
-			const render = () => {
-				frameCount++;
-				draw(context, frameCount);
-				animationFrameId = window.requestAnimationFrame(render);
-			};
-			render();
-
-			// remove listeners
-			return () => {
-				window.cancelAnimationFrame(animationFrameId);
-				listeners.forEach(({ name, handler }) =>
-					window.removeEventListener(name, handler)
+				setSelectedId(
+					itemSelected && itemSelected.length > 0
+						? itemSelected[0].id
+						: null
 				);
-			};
-		}, [draw]);
+			}
 
-		return canvasRef;
+			// update last
+			lastType = type;
+
+			// update coords
+			setCoords({
+				...coords,
+				clientCoords,
+				layerCoords,
+				center,
+				prev,
+				isDragging,
+				dragCoords,
+				isClicking,
+				lastType,
+			});
+		}
 	};
-	const canvasRef = useCanvas(draw);
+	const canvasRef = useCanvas(draw, canvasSize, handleInteraction);
 
 	//
 	// render

@@ -1,47 +1,11 @@
 import { useEffect, useState } from "react";
 import Canvas from "./canvas/Canvas";
 import FamilyTree from "./d3-tree/FamilyTree";
-import FamilyMember from "./family-list/FamilyMember";
+import EditFamilyMember from "./family-list/EditFamilyMember";
 import { Box, Button } from "@mui/material";
+import FamilyFactory from "./family-member/FamilyFactory";
+import loadDefault from "./family-member/defaultFamilyMembers";
 
-const initFamily = [
-	{
-		id: 1,
-		firstName: "Jane",
-		middleName: "Ann",
-		lastName: "Doe",
-		gender: "female",
-		deceased: true,
-		birthPlace: "",
-		birthMonth: 1,
-		birthDay: 2,
-		birthYear: 1928,
-		deathPlace: "",
-		deathMonth: 3,
-		deathDay: 9,
-		deathYear: 1999,
-		burialPlace: "",
-		birthLot: "",
-	},
-	{
-		id: 2,
-		firstName: "John",
-		middleName: "Paul",
-		lastName: "Doe",
-		gender: "male",
-		deceased: true,
-		birthPlace: "",
-		birthMonth: 1,
-		birthDay: 2,
-		birthYear: 1928,
-		deathPlace: "",
-		deathMonth: 3,
-		deathDay: 9,
-		deathYear: 1999,
-		burialPlace: "",
-		birthLot: "",
-	},
-];
 const emptyFamilyMember = {
 	firstName: "",
 	middleName: "",
@@ -61,14 +25,18 @@ const emptyFamilyMember = {
 };
 
 function Tree() {
-	const [familyList, setFamilyList] = useState(initFamily);
+	let famFac = new FamilyFactory();
+	let { members, relationships } = loadDefault(famFac);
+
+	const [familyList, setFamilyList] = useState(members);
 	const [isAdding, setIsAdding] = useState(false);
-	const [isOpen, setIsOpen] = useState(-1);
+	// const [isOpenId, setIsOpenId] = useState(-1);
 	const [canvas, setCanvas] = useState({
 		width: 100,
 		height: 100,
 		padding: 20,
 	});
+	const [selectedId, setSelectedId] = useState(null);
 
 	// on load
 	useEffect(() => {
@@ -85,7 +53,7 @@ function Tree() {
 		setFamilyList([...familyList, { ...newMember, id: familyList.length }]);
 	};
 	const handleItemSave = (editedMember) => {
-		setIsOpen(-1);
+		setSelectedId(-1);
 		setFamilyList([
 			...familyList.map((f) =>
 				f.id === editedMember.id ? editedMember : f
@@ -96,62 +64,87 @@ function Tree() {
 		setIsAdding(false);
 	};
 	const handleItemCancel = () => {
-		setIsOpen(-1);
+		setSelectedId(-1);
 	};
 	const handleNewOpen = () => {
 		setIsAdding(true);
-		setIsOpen(-1);
+		setSelectedId(-1);
 	};
 	const handleItemOpen = (i) => {
 		setIsAdding(false);
-		setIsOpen(i);
+		setSelectedId(i);
 	};
 
 	// render
 	return (
 		<div style={{ display: "grid", gridTemplateColumns: "30% 70%" }}>
 			<div>
-				<div>
-					{familyList.map((member) => {
-						return (
-							<Box key={member.id}>
-								{isOpen === member.id ? (
-									<FamilyMember
-										data={member}
-										handleSave={handleItemSave}
-										handleCancel={handleItemCancel}
+				<div
+					style={{ overflow: "scroll", height: canvas.height + "px" }}
+				>
+					{selectedId ? (
+						<div>
+							<EditFamilyMember
+								data={
+									familyList.filter(
+										(mem) => mem.id === selectedId
+									)[0]
+								}
+								handleSave={handleItemSave}
+								handleCancel={handleItemCancel}
+							/>
+						</div>
+					) : (
+						<div>
+							<div>
+								{familyList.map((member) => {
+									return (
+										<Box key={member.id}>
+											{selectedId === member.id ? (
+												<EditFamilyMember
+													data={member}
+													handleSave={handleItemSave}
+													handleCancel={
+														handleItemCancel
+													}
+												/>
+											) : (
+												<>
+													{member.fullName}
+													<Button
+														onClick={() =>
+															handleItemOpen(
+																member.id
+															)
+														}
+													>
+														Edit
+													</Button>
+												</>
+											)}
+										</Box>
+									);
+								})}
+							</div>
+							<hr />
+							<div>
+								{isAdding ? (
+									<EditFamilyMember
+										data={emptyFamilyMember}
+										handleSave={handleNewSave}
+										handleCancel={handleNewCancel}
 									/>
 								) : (
 									<>
-										{member.firstName}
-										<Button
-											onClick={() =>
-												handleItemOpen(member.id)
-											}
-										>
-											Edit
+										<Button onClick={handleNewOpen}>
+											Add New
 										</Button>
 									</>
 								)}
-							</Box>
-						);
-					})}
-				</div>
-				<hr />
-				<div>
-					{isAdding ? (
-						<FamilyMember
-							data={emptyFamilyMember}
-							handleSave={handleNewSave}
-							handleCancel={handleNewCancel}
-						/>
-					) : (
-						<>
-							<Button onClick={handleNewOpen}>Add New</Button>
-						</>
+							</div>
+						</div>
 					)}
 				</div>
-				<div></div>
 			</div>
 			<div>
 				<Box
@@ -160,7 +153,14 @@ function Tree() {
 					backgroundColor={"#ddd"}
 				>
 					{/* <FamilyTree /> */}
-					<Canvas family={familyList} canvasSize={canvas} />
+					<Canvas
+						familyList={familyList}
+						setFamilyList={setFamilyList}
+						relationships={relationships}
+						canvasSize={canvas}
+						selectedId={selectedId}
+						setSelectedId={setSelectedId}
+					/>
 				</Box>
 			</div>
 		</div>
