@@ -16,14 +16,21 @@ import YearPicker from "./YearPicker";
 import DayPicker from "./DayPicker";
 import { useState } from "react";
 import AddFamilyMember from "./AddFamilyMember";
+import AddParent from "./add/AddParent";
+import AddSibling from "./add/AddSibling";
+import AddPartner from "./add/AddPartner";
+import AddChild from "./add/AddChild";
 
-export default function EditFamilyMember({ data, handleSave, handleCancel }) {
-	const [dataTemp, setDataTemp] = useState(data);
-	const [addingFamily, setAddingFamily] = useState({
-		isAdding: null,
-	});
+export default function EditFamilyMember({
+	member,
+	handleSave,
+	handleCancel,
+	mode,
+	setMode,
+}) {
+	const [dataTemp, setDataTemp] = useState(member);
 
-	const isNew = data.id ? false : true;
+	const isNew = member.id ? false : true;
 
 	// handlers
 	const handleNameValueChange = (e) => {
@@ -45,6 +52,8 @@ export default function EditFamilyMember({ data, handleSave, handleCancel }) {
 		handleSave(dataTemp);
 	};
 
+	const handleSetCancel = () => setMode({ ...mode, adding: null });
+
 	// styles
 	const rowStyles = { display: "flex", gap: "0.5rem", padding: "0.5rem" };
 
@@ -54,7 +63,7 @@ export default function EditFamilyMember({ data, handleSave, handleCancel }) {
 			{/* NAME */}
 
 			<Box sx={rowStyles}>
-				<h2>{isNew ? <></> : data.fullName}</h2>
+				<h2>{isNew ? <></> : member.fullName}</h2>
 			</Box>
 
 			{/* ADD FAMILY MEMBER */}
@@ -63,10 +72,22 @@ export default function EditFamilyMember({ data, handleSave, handleCancel }) {
 				<></>
 			) : (
 				<Box sx={rowStyles}>
-					<AddFamilyMember
-						addingFamily={addingFamily}
-						setAddingFamily={setAddingFamily}
-					/>
+					{mode.adding === "parent" ? (
+						<AddParent />
+					) : mode.adding === "sibling" ? (
+						<AddSibling />
+					) : mode.adding === "partner" ? (
+						<AddPartner />
+					) : mode.adding === "child" ? (
+						<AddChild />
+					) : (
+						<AddFamilyMember mode={mode} setMode={setMode} />
+					)}
+					{mode.adding ? (
+						<Button onClick={handleSetCancel}>Cancel</Button>
+					) : (
+						<></>
+					)}
 				</Box>
 			)}
 

@@ -6,6 +6,8 @@ export default class FamilyGroup {
 		this.childGroup = [];
 	}
 
+	// set methods
+
 	addParent(parent) {
 		this.parentGroup.push(parent);
 	}
@@ -13,8 +15,21 @@ export default class FamilyGroup {
 		this.childGroup.push(child);
 	}
 
-	// methods
-	//
+	// get methods
+
+	findMember(mem) {
+		const pg = this.parentGroup.find((p) => p.id === mem.id);
+		const cg = this.childGroup.find((c) => c.id === mem.id);
+		return pg || cg
+			? {
+					parentGroup: pg,
+					childGroup: cg,
+			  }
+			: null;
+	}
+
+	// drawing methods
+
 	drawLine = (ctx, offSet, x1, y1, x2, y2) => {
 		canvasDrawLine(
 			ctx,
