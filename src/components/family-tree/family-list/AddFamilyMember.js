@@ -1,5 +1,20 @@
 import { Button } from "@mui/material";
 
+// ////
+//
+// AddFamilyMember
+//
+/*
+add:
+	parent
+		if(in familyGroup as child) 
+			add parent to group
+		else 
+			add to family group
+	sibling
+		if(in familygroup as child)
+*/
+
 export default function AddFamilyMember({ addingFamily, setAddingFamily }) {
 	const { isAdding } = addingFamily;
 

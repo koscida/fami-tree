@@ -12,7 +12,7 @@ export default class FamilyFactory {
 	}
 
 	addMember(member) {
-		const newId = this.members.length;
+		const newId = this.members.length + 1;
 		member.id = newId;
 		this.members.push(member);
 	}
