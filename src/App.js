@@ -1,33 +1,8 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import Tree from "./components/family-tree/Tree";
-import Colors from "./components/colors/Colors";
-import ViewFamilyMap from "./components/family-tree/family-member/ViewFamilyMap";
-import Quilt from "./components/quilt/Quilt";
-import Quilt2 from "./components/quilt2/Quilt2";
+import routes from "./home/nav";
 
 function App() {
-	const router = createBrowserRouter([
-		{
-			path: "/",
-			element: <Tree />,
-		},
-		{
-			path: "/family-map",
-			element: <ViewFamilyMap />,
-		},
-		{
-			path: "/colors",
-			element: <Colors />,
-		},
-		{
-			path: "/quilt",
-			element: <Quilt />,
-		},
-		{
-			path: "/quilt2",
-			element: <Quilt2 />,
-		},
-	]);
+	const router = createBrowserRouter(routes);
 	return <RouterProvider router={router} />;
 }
 

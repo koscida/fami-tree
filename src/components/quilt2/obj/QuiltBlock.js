@@ -1,16 +1,16 @@
 import { Box } from "@mui/material";
 
 export default class QuiltBlock {
-	constructor(type) {
+	constructor(type, options) {
 		this.id = Math.random();
 		this.type = type;
 		this.x = 0;
 		this.y = 0;
 
-		this.w = 100;
-		this.h = 100;
+		this.w = options.cellSize;
+		this.h = options.cellSize;
 		this.styles = {
-			backgroundColor: "pink",
+			backgroundColor: options.colorWay[0],
 			width: this.w + "px",
 			height: this.h + "px",
 			position: "absolute",
