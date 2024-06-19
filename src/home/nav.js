@@ -4,6 +4,7 @@ import Colors from "../components/colors/Colors";
 import ViewFamilyMap from "../components/family-tree/family-member/ViewFamilyMap";
 import Quilt from "../components/quilt/Quilt";
 import Quilt2 from "../components/quilt2/Quilt2";
+import Flow from "../components/flow/Flow";
 import Home from "./Home";
 
 const routes = [
@@ -36,6 +37,11 @@ const routes = [
 		path: "/quilt2",
 		element: <Quilt2 />,
 		name: "Quilt2",
+	},
+	{
+		path: "/flow",
+		element: <Flow />,
+		name: "Flow",
 	},
 ];
 export default routes;
