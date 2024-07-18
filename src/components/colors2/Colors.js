@@ -39,31 +39,31 @@ const getColorFromPos = ({ x, y }) => {
 	// 	{ offset: 0.84, color: "rgb(255, 255,   0)" },
 	// 	{ offset:    1, color: "rgb(255,   0,   0)" },
 	var rat = x / colorPickerWidth;
-	var r, g, b;
+	var red, green, blue;
 	if (rat <= 0.15) {
-		r = 255;
-		g = 0;
-		b = (rat / 0.15) * 255;
+		red = 255;
+		green = 0;
+		blue = (rat / 0.15) * 255;
 	} else if (rat <= 0.33) {
-		r = 255 - ((rat - 0.15) / (0.33 - 0.15)) * 255;
-		g = 0;
-		b = 255;
+		red = 255 - ((rat - 0.15) / (0.33 - 0.15)) * 255;
+		green = 0;
+		blue = 255;
 	} else if (rat <= 0.49) {
-		r = 0;
-		g = ((rat - 0.33) / (0.49 - 0.33)) * 255;
-		b = 255;
+		red = 0;
+		green = ((rat - 0.33) / (0.49 - 0.33)) * 255;
+		blue = 255;
 	} else if (rat <= 0.67) {
-		r = 0;
-		g = 255;
-		b = 255 - ((rat - 0.49) / (0.67 - 0.49)) * 255;
+		red = 0;
+		green = 255;
+		blue = 255 - ((rat - 0.49) / (0.67 - 0.49)) * 255;
 	} else if (rat <= 0.84) {
-		r = ((rat - 0.67) / (0.84 - 0.67)) * 255;
-		g = 255;
-		b = 0;
+		red = ((rat - 0.67) / (0.84 - 0.67)) * 255;
+		green = 255;
+		blue = 0;
 	} else {
-		r = 255;
-		g = 255 - ((rat - 0.84) / (1 - 0.84)) * 255;
-		b = 0;
+		red = 255;
+		green = 255 - ((rat - 0.84) / (1 - 0.84)) * 255;
+		blue = 0;
 	}
 
 	// y determines transparency
@@ -79,11 +79,22 @@ const getColorFromPos = ({ x, y }) => {
 	} else {
 		w = ((0.5 - rat) / 0.5) * 255;
 	}
-	r += w;
-	g += w;
-	b += w;
+	red += w;
+	green += w;
+	blue += w;
 
-	return "rgb(" + r + "," + g + "," + b + ")";
+	// limit range
+	red = Math.max(0, Math.min(255, Math.round(red)));
+	green = Math.max(0, Math.min(255, Math.round(green)));
+	blue = Math.max(0, Math.min(255, Math.round(blue)));
+
+	// return
+	return {
+		color: "rgb(" + red + "," + green + "," + blue + ")",
+		red,
+		green,
+		blue,
+	};
 };
 
 const getCellsColors = (cells, cellMarkers) => {
@@ -92,10 +103,17 @@ const getCellsColors = (cells, cellMarkers) => {
 		for (var j = i + 1; j < cellMarkers.length; j++) {
 			const a = cellMarkers[i],
 				b = cellMarkers[j];
-			const diffX = a.x - b.x,
-				diffY = a.y - b.y;
 			const cellA = cells[a.x][a.y],
 				cellB = cells[b.x][b.y];
+			const diffX = Math.abs(a.x - b.x),
+				diffY = Math.abs(a.y - b.y),
+				maxX = Math.max(a.x, b.x),
+				minX = Math.min(a.x, b.x),
+				maxY = Math.max(a.y, b.y),
+				minY = Math.min(a.y, b.y);
+			const diffRed = Math.abs(cellA.red - cellB.red),
+				diffGreen = Math.abs(cellA.green - cellB.green),
+				diffBlue = Math.abs(cellA.blue - cellB.blue);
 			console.log(
 				" a: ",
 				a,
@@ -110,6 +128,49 @@ const getCellsColors = (cells, cellMarkers) => {
 				" cellB: ",
 				cellB
 			);
+
+			// create the path
+			const distMax = Math.max(diffX, diffY);
+			let stepX, stepY, stepRed, stepGreen, stepBlue, color;
+			for (var d = 1; d < distMax; d++) {
+				const xDir = a.x <= b.x ? 1 : -1,
+					yDir = a.y <= b.y ? 1 : -1,
+					redDir = cellA.red <= cellB.red ? 1 : -1,
+					greenDir = cellA.green <= cellB.green ? 1 : -1,
+					blueDir = cellA.blue <= cellB.blue ? 1 : -1,
+					ratio = d / distMax;
+
+				// move x
+				stepX = a.x + xDir * Math.round(ratio * diffX);
+
+				// move y
+				stepY = a.y + yDir * Math.round(ratio * diffY);
+
+				// move color
+				stepRed = cellA.red + redDir * Math.round(ratio * diffRed);
+				stepGreen =
+					cellA.green + greenDir * Math.round(ratio * diffGreen);
+				stepBlue = cellA.blue + blueDir * Math.round(ratio * diffBlue);
+				color = `rgb(${stepRed}, ${stepGreen}, ${stepBlue})`;
+				console.log(
+					" stepRed: ",
+					stepRed,
+					" stepGreen: ",
+					stepGreen,
+					" stepBlue: ",
+					stepBlue,
+					" color: ",
+					color
+				);
+
+				// color path
+				cells[stepX][stepY] = {
+					color,
+					red: stepRed,
+					blue: stepGreen,
+					green: stepBlue,
+				};
+			}
 		}
 	}
 	cellMarkers.forEach(({ x, y }, i) => {});
@@ -122,18 +183,19 @@ const getCellsColors = (cells, cellMarkers) => {
 // ////
 
 const startingHighlight = { x: -1, y: -1 };
-const startingPalletColors = [
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-	"#000",
-];
+const startingPalletColors = {
+	0: { color: "rgb(255, 255,   0)", red: 255, green: 255, blue: 0 },
+	1: { color: "rgb(0,   255, 255)", red: 0, green: 255, blue: 255 },
+	2: { color: "rgb(255,   0, 255)", red: 255, green: 0, blue: 255 },
+	3: { color: "rgb(200, 200, 200)", red: 200, green: 200, blue: 200 },
+	4: { color: "rgb(100, 100, 100)", red: 100, green: 100, blue: 100 },
+
+	5: { color: "rgb(0,   255,   0)", red: 0, green: 255, blue: 0 },
+	6: { color: "rgb(0,     0, 255)", red: 0, green: 0, blue: 255 },
+	7: { color: "rgb(255,   0,   0)", red: 255, green: 0, blue: 0 },
+	8: { color: "rgb(255, 255, 255)", red: 255, green: 255, blue: 255 },
+	9: { color: "rgb(0,     0,   0)", red: 0, green: 0, blue: 0 },
+};
 const selectedColor = "#969600";
 const startingCells = [...Array(gridXCount).keys()].map((x) =>
 	[...Array(gridYCount).keys()].map((y) => ({ color: "transparent" }))
@@ -143,8 +205,7 @@ export default function Colors() {
 	const [highlight, setHighlight] = useState(startingHighlight);
 	const [cells, setCells] = useState(startingCells);
 	const [cellMarkers, setCellMarkers] = useState([]);
-	const [coords, setCoords] = useState({ x: -1, y: -1 });
-	const [palletColors, setPalletColors] = useState([startingPalletColors]);
+	const [palletColors, setPalletColors] = useState(startingPalletColors);
 	const [selectedDelete, setSelectedDelete] = useState(false);
 	const [selectedPalletIdx, setSelectedPalletIdx] = useState(null);
 
@@ -172,7 +233,7 @@ export default function Colors() {
 
 			// 1. set new color
 			let newCells = cells;
-			newCells[x][y].color = palletColors[selectedPalletIdx];
+			newCells[x][y] = palletColors[selectedPalletIdx];
 			// 2. run cell color algorithm
 			newCells = getCellsColors(newCells, newCellMarkers);
 			// 3. set
@@ -186,13 +247,11 @@ export default function Colors() {
 			x: e.clientX - colorPickerX - padding,
 			y: e.clientY - colorPickerY - padding,
 		};
-		setCoords(newCoords);
 
 		const newColor = getColorFromPos(newCoords);
+
 		if (selectedPalletIdx >= 0) {
-			const newPalletColors = palletColors;
-			newPalletColors[selectedPalletIdx] = newColor;
-			setPalletColors(newPalletColors);
+			setPalletColors({ ...palletColors, [selectedPalletIdx]: newColor });
 		}
 	};
 
@@ -230,6 +289,15 @@ export default function Colors() {
 
 		return (
 			<>
+				{/* Background */}
+				<rect
+					width={colorPickerWidth + padding * 3}
+					height={frameHeight}
+					x={colorPickerX - padding * 2}
+					y={colorPickerY - padding}
+					fill="#eaecef"
+				/>
+
 				{/* Background */}
 				<rect
 					width={colorPickerWidth + padding * 2}
@@ -301,11 +369,14 @@ export default function Colors() {
 					stroke="transparent"
 					onClick={handleColorSelect}
 				/>
+
+				{/* Pallet  */}
+				<ColorPickerPallet />
 			</>
 		);
 	};
 
-	const ColorPallet = () => {
+	const ColorPickerPallet = () => {
 		const pallet = 30,
 			colorPalletX = colorPickerX - padding,
 			colorPalletY = colorPickerY + colorPickerHeight + padding * 2;
@@ -334,7 +405,7 @@ export default function Colors() {
 
 				{[0, 1].map((i) =>
 					[0, 1, 2, 3, 4].map((j) => {
-						const idx = i * 4 + j;
+						const idx = i * 5 + j;
 						return (
 							<rect
 								key={idx}
@@ -342,12 +413,13 @@ export default function Colors() {
 								y={colorPalletY + (pallet + padding) * i}
 								width={pallet}
 								height={pallet}
-								fill={palletColors[idx]}
+								fill={palletColors[idx].color}
 								stroke={
 									selectedPalletIdx === idx
 										? selectedColor
-										: "transparend"
+										: "transparent"
 								}
+								strokeWidth={2}
 								onClick={() => handlePalletSelect(idx)}
 							/>
 						);
@@ -371,7 +443,7 @@ export default function Colors() {
 					y={0}
 					fill="transparent"
 					stroke={"black"}
-					strokeWidth={1}
+					strokeWidth={0}
 				/>
 
 				{[...Array(gridXCount).keys()].map((x) =>
@@ -413,26 +485,14 @@ export default function Colors() {
 			<svg
 				width={canvasWidth}
 				height={canvasHeight}
-				style={{ border: "1px solid black", margin: padding }}
+				style={{ border: "0px solid black", margin: padding }}
 			>
 				<Grid />
 				<ColorPicker />
-				<ColorPallet />
 			</svg>
 
 			<div style={{ position: "absolute", bottom: 0, right: 0 }}>
-				<p>
-					Coords:
-					<br />
-					X: {coords.x}
-					<br />
-					Y: {coords.y}
-					<br />
-					Color:{" "}
-					{palletColors.map((c, i) => (
-						<span key={i}>{c}</span>
-					))}
-				</p>
+				<p></p>
 			</div>
 		</div>
 	);
