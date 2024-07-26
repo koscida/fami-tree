@@ -2,6 +2,7 @@ import React from "react";
 import Tree from "../components/family-tree/Tree";
 import Colors from "../components/colors/Colors";
 import Colors2 from "../components/colors2/Colors";
+import Colors3 from "../components/colors3/Colors";
 import ViewFamilyMap from "../components/family-tree/family-member/ViewFamilyMap";
 import Quilt from "../components/quilt/Quilt";
 import Quilt2 from "../components/quilt2/Quilt2";
@@ -33,6 +34,11 @@ const routes = [
 		path: "/colors2",
 		element: <Colors2 />,
 		name: "Colors2",
+	},
+	{
+		path: "/colors3",
+		element: <Colors3 />,
+		name: "Colors3",
 	},
 	{
 		path: "/quilt",

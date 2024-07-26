@@ -1,0 +1,88 @@
+.colors3 {
+	display: grid;
+	grid-template-columns: 70% 30%;
+
+	p {
+		margin: 0;
+		padding: 0;
+	}
+	.grid5050 {
+		display: grid;
+		grid-template-columns: 50% 50%;
+	}
+
+	.inputRow {
+		display: grid;
+		flex-direction: row;
+		grid-template-columns: 40% 60%;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.options {
+		background: #ddd;
+		padding: 1rem;
+	}
+	.colorRow {
+		padding: 1rem;
+		border-bottom: 1px solid #ddd;
+		display: flex;
+		flex-direction: row;
+		gap: 1rem;
+
+		&:last-child {
+			border: 0;
+		}
+	}
+
+	.colorCell {
+		border-right: 1px solid #ddd;
+		padding: 0 1rem 0 0;
+
+		&:last-child {
+			border: 0;
+		}
+
+		.buttonRow {
+			border-bottom: 1px solid #ddd;
+			padding-bottom: 0.5rem;
+			margin-bottom: 0.5rem;
+			&:last-child {
+				border: 0;
+			}
+
+			&.inputRow {
+				display: flex;
+				flex-direction: column;
+				gap: 5px;
+
+				.inputField input {
+					width: 100%;
+					max-width: 100px;
+				}
+				.inputSubmit {
+				}
+			}
+		}
+	}
+	.colorGrid {
+		display: flex;
+		flex-direction: row;
+		gap: 0.25rem;
+		font-size: 0.6rem;
+
+		> div > div {
+			display: grid;
+			grid-template-columns: 1fr 2fr;
+			gap: 0.25rem;
+
+			> *:first-child {
+				flex: 3 0;
+			}
+
+			> *:last-child {
+				flex: 1 0;
+			}
+		}
+	}
+}
