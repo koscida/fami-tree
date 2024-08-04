@@ -85,4 +85,15 @@
 			}
 		}
 	}
+
+	.keyFrames {
+		display: flex;
+		flex-direction: row;
+		gap: 5px;
+
+		.keyFrame {
+			width: 20px;
+			height: 20px;
+		}
+	}
 }
