@@ -152,14 +152,16 @@ export default function Colors() {
 			)}
 		</div>
 	);
-	const AddColorRow = ({ rowIdx, colIdx }) => (
-		<div className="colorRow">
-			<div className="colorCell"></div>
-			<div className="colorCell">
-				<AddColorBtn rowIdx={rowIdx} colIdx={colIdx ?? 0} />
+	const AddColorRow = ({ rowIdx, colIdx }) => {
+		return (
+			<div className="colorRow">
+				<div className="colorCell"></div>
+				<div className="colorCell">
+					<AddColorBtn rowIdx={rowIdx} colIdx={colIdx ?? 0} />
+				</div>
 			</div>
-		</div>
-	);
+		);
+	};
 	const DeleteColor = ({ rowIdx, colIdx }) => (
 		<div className="buttonRow">
 			<button onClick={() => handleDeleteColor(rowIdx, colIdx)}>
@@ -180,6 +182,45 @@ export default function Colors() {
 
 	// components
 
+	const DisplayAddColorRow = ({ rowIdx }) => {
+		const rowColorIdx =
+			rowIdx + (Math.ceil(rowIdx) !== Math.floor(rowIdx) ? 0.5 : -1);
+		console.log(
+			"--DisplayAddColorRow--",
+			" rowIdx: ",
+			rowIdx,
+			" rowColorIdx: ",
+			rowColorIdx
+		);
+		const colorRow = colorList[rowColorIdx] ?? { 0: {} },
+			rowKeys = Object.keys(colorRow)
+				.map((x) => parseFloat(x))
+				.sort((a, b) => a > b);
+		console.log(" colorRow: ", colorRow, " rowKeys: ", rowKeys);
+
+		return (
+			<div className="colorRow">
+				{rowKeys.length > 0 ? (
+					rowKeys.map((colIdx, i) => {
+						colIdx = parseFloat(colIdx);
+						return (
+							<Fragment key={i}>
+								<div className="colorCell"></div>
+								<div className="colorCell">
+									<AddColorBtn
+										rowIdx={rowIdx}
+										colIdx={colIdx}
+									/>
+								</div>
+							</Fragment>
+						);
+					})
+				) : (
+					<></>
+				)}
+			</div>
+		);
+	};
 	const DisplayColorList = () => {
 		return colorListKeys.map((rowIdx, i) => {
 			const rowKeyIdx = rowIdx + 0.5;
@@ -187,14 +228,14 @@ export default function Colors() {
 				<Fragment key={i}>
 					{/* Display color row */}
 					{Math.round(rowIdx) === rowIdx ? (
-						<ColorRow rowIdx={rowIdx} />
+						<DisplayColorRow rowIdx={rowIdx} />
 					) : (
 						<></>
 					)}
 
 					{/* Display Add color in-between each color row */}
 					{rowIdx < totalRows - 1 ? (
-						<ColorRowInBetween
+						<DisplayColorRowInBetween
 							rowIdx={rowIdx}
 							rowKeyIdx={rowKeyIdx}
 						/>
@@ -205,8 +246,7 @@ export default function Colors() {
 			);
 		});
 	};
-
-	const ColorRow = ({ rowIdx }) => {
+	const DisplayColorRow = ({ rowIdx }) => {
 		const colorRow = colorList[rowIdx],
 			rowEntries = Object.entries(colorRow),
 			totalColumns = Object.keys(colorList[rowIdx]).length;
@@ -265,19 +305,17 @@ export default function Colors() {
 			</div>
 		);
 	};
-	const ColorRowInBetween = ({ rowIdx, rowKeyIdx }) => {
+	const DisplayColorRowInBetween = ({ rowIdx, rowKeyIdx }) => {
 		const colorRow =
-				colorList[
-					Math.min(
-						Object.keys(colorList[rowIdx]) <
-							Object.keys(colorList[rowIdx + 1])
-					)
-						? rowIdx
-						: rowIdx + 1
-				],
-			rowKeys = Object.keys(colorRow)
-				.map((x) => parseFloat(x))
-				.sort((a, b) => a > b);
+			colorList[
+				Object.keys(colorList[rowIdx]).length <
+				Object.keys(colorList[rowIdx + 1]).length
+					? rowIdx
+					: rowIdx + 1
+			];
+		const rowKeys = Object.keys(colorRow)
+			.map((x) => parseFloat(x))
+			.sort((a, b) => a > b);
 
 		return (
 			<div className="colorRow">
@@ -286,7 +324,7 @@ export default function Colors() {
 						colIdx = parseFloat(colIdx);
 						const colKeyIdx = colIdx;
 						return (
-							<>
+							<Fragment key={i}>
 								<div className="colorCell"></div>
 								<div className="colorCell">
 									<ColorInBetween
@@ -296,7 +334,7 @@ export default function Colors() {
 										colKeyIdx={colKeyIdx}
 									/>
 								</div>
-							</>
+							</Fragment>
 						);
 					})
 				) : (
@@ -321,7 +359,7 @@ export default function Colors() {
 							handleCancel={handleEditKeyCancel}
 						/>
 					) : (
-						<DisplayColorKeys
+						<ColorKeys
 							rowStartKeyIdx={rowKeyIdx}
 							colStartKeyIdx={colKeyIdx}
 							rowEndKeyIdx={
@@ -363,7 +401,7 @@ export default function Colors() {
 			</div>
 		);
 	};
-	const DisplayColorKeys = ({
+	const ColorKeys = ({
 		rowStartKeyIdx,
 		colStartKeyIdx,
 		rowEndKeyIdx,
@@ -497,6 +535,7 @@ export default function Colors() {
 			</div>
 		);
 	};
+
 	const ColorDetail = ({ cellColor, rowIdx, colIdx }) => (
 		<div className="colorCell">
 			{cellColor.isMarked ? (
@@ -638,6 +677,7 @@ export default function Colors() {
 		.map((x) => parseFloat(x))
 		.sort((a, b) => a > b);
 	const totalRows = Object.entries(colorList).length;
+	const canAddRow = totalRows < maxRows;
 	// console.log(
 	// 	" colorList: ",
 	// 	colorList,
@@ -653,18 +693,14 @@ export default function Colors() {
 		<div className="colors3">
 			<div className="colors">
 				{/* Display Add Color at row 0 */}
-				{totalRows < maxRows ? (
-					<AddColorRow rowIdx={-0.5} colIdx={0} />
-				) : (
-					<></>
-				)}
+				{canAddRow ? <DisplayAddColorRow rowIdx={-0.5} /> : <></>}
 
 				{/* Display all color rows */}
 				<DisplayColorList />
 
 				{/* Display Add Color at last row */}
-				{totalRows > 0 && totalRows < maxRows ? (
-					<AddColorRow rowIdx={totalRows} colIdx={0} />
+				{canAddRow && totalRows > 0 ? (
+					<DisplayAddColorRow rowIdx={totalRows} />
 				) : (
 					<></>
 				)}
