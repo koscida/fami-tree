@@ -19,10 +19,14 @@
 		margin-bottom: 1rem;
 	}
 
+	.colors {
+		overflow-x: scroll;
+	}
 	.options {
 		background: #ddd;
 		padding: 1rem;
 	}
+
 	.colorRow {
 		padding: 1rem;
 		border-bottom: 1px solid #ddd;
@@ -38,6 +42,8 @@
 	.colorCell {
 		border-right: 1px solid #ddd;
 		padding: 0 1rem 0 0;
+		width: 100px;
+		min-width: 100px;
 
 		&:last-child {
 			border: 0;
@@ -86,14 +92,24 @@
 		}
 	}
 
-	.keyFrames {
+	.keyFramesCell {
 		display: flex;
-		flex-direction: row;
-		gap: 5px;
+		flex-direction: column;
 
-		.keyFrame {
-			width: 20px;
-			height: 20px;
+		.keyFrames {
+			display: flex;
+			flex-direction: row;
+			gap: 5px;
+			flex-wrap: wrap;
+
+			.keyFrame {
+				width: 18px;
+				height: 18px;
+			}
 		}
+	}
+
+	.idx {
+		font-size: 0.8rem;
 	}
 }

@@ -8,56 +8,85 @@ const colorModelOptions = { hsl: "HSL", hsv: "HSV" };
 export default function Colors() {
 	const [colorList, setColorList] = useState({});
 	const [keyFrames, setKeyFrames] = useState({});
+	// editing states
+	const [keyFrameEditing, setKeyFrameEditing] = useState(null);
 	// options
 	const [maxColumns, setMaxColumns] = useState(10);
 	const [maxRows, setMaxRows] = useState(10);
 	const [colorModel, setColorModel] = useState("hsl");
 	const [defaultColor, setDefaultColor] = useState("#000");
-	const [showIdx, setShowIdx] = useState(false);
+	const [showIdx, setShowIdx] = useState(true);
 
 	// helpers
 	const generateNewCell = () => ({ isMarked: true, color: defaultColor });
 
 	// handlers
 
-	const handleAddColorRow = (rowIdx) => {
-		// check if can add to row
+	const handleAddColor = (rowIdx, colIdx) => {
+		let newColorList = { ...colorList };
+		// get total number of rows
 		const totalRows = Object.keys(colorList).length;
-		if (totalRows < maxRows) {
-			let newColorList = {};
-			// check if first row
-			if (totalRows === 0) {
-				newColorList = { 0: { 0: generateNewCell() } };
-			} else {
-				// copy
-				newColorList = { ...colorList };
-				// move down
-				for (var i = rowIdx; i < totalRows; i++) {
+
+		// check if first row
+		if (totalRows === 0) {
+			// set first row
+			newColorList = { 0: { 0: generateNewCell() } };
+		}
+		// check if less than max number of rows
+		else if (totalRows < maxRows) {
+			// check if adding additional row
+			if (rowIdx >= totalRows) {
+				// set extra row
+				newColorList = {
+					...colorList,
+					[rowIdx]: { 0: generateNewCell() },
+				};
+			}
+			// check if adding in-between row
+			else if (rowIdx !== Math.round(rowIdx)) {
+				// new idx
+				const rowAddIdx = rowIdx + 0.5;
+				// move down color
+				for (var i = rowAddIdx; i < totalRows; i++) {
 					newColorList[i + 1] = colorList[i];
 				}
 				// add
-				newColorList[rowIdx] = { 0: generateNewCell() };
+				newColorList[rowAddIdx] = { 0: generateNewCell() };
+
+				// move frames down
+				let newKeyFrames = {
+					...keyFrames,
+				};
+				for (var i = rowIdx; i < totalRows; i++) {
+					newKeyFrames[i + 1] = keyFrames[i];
+				}
+				newKeyFrames[rowIdx] = null;
+				setKeyFrames(newKeyFrames);
 			}
-			//set
-			setColorList(newColorList);
-		}
-	};
-	const handleAddColorColumn = (rowIdx, colIdx) => {
-		// check if can add to row
-		const totalColumns = Object.keys(colorList[rowIdx]).length;
-		if (totalColumns < maxColumns) {
-			// copy
-			let newColorListRow = { ...colorList[rowIdx] };
-			// move down
-			for (var i = colIdx; i < totalColumns; i++) {
-				newColorListRow[i + 1] = colorList[rowIdx][i];
+			// else, adding a col
+			else {
+				// get total number of columns
+				const totalColumns = Object.keys(colorList[rowIdx]).length;
+
+				// check if less and max number of cols
+				if (totalColumns < maxColumns) {
+					// copy
+					let newColorListRow = { ...colorList[rowIdx] };
+					// move down
+					for (var i = colIdx; i < totalColumns; i++) {
+						newColorListRow[i + 1] = colorList[rowIdx][i];
+					}
+					// add
+					newColorListRow[colIdx] = generateNewCell();
+					// set
+					newColorList[rowIdx] = newColorListRow;
+				}
 			}
-			// add
-			newColorListRow[colIdx] = generateNewCell();
-			// set
-			setColorList({ ...colorList, [rowIdx]: newColorListRow });
 		}
+		//set
+		setColorList(newColorList);
 	};
+
 	const handleDeleteColor = (rowIdx, colIdx) => {
 		const newRow = {};
 		const row = colorList[rowIdx];
@@ -70,6 +99,7 @@ export default function Colors() {
 	};
 
 	const handleAddKeyFrame = (rowIdx, colIdx, value) => {
+		// update the keyframe with new value
 		setKeyFrames({
 			...keyFrames,
 			[rowIdx]: {
@@ -77,6 +107,11 @@ export default function Colors() {
 				[colIdx]: value,
 			},
 		});
+		// reset editing keyframe
+		setKeyFrameEditing(null);
+	};
+	const handleEditKeyCancel = () => {
+		setKeyFrameEditing(null);
 	};
 
 	const handleColorChange = (color, rowIdx, colIdx) => {
@@ -99,42 +134,30 @@ export default function Colors() {
 	// small components
 
 	/* AddKeyBtn in other file */
-	const AddColorBtn = ({ rowIdx }) => (
+	const AddColorBtn = ({ rowIdx, colIdx }) => (
 		<div className="buttonRow">
-			<button onClick={() => handleAddColorRow(rowIdx)}>Add Color</button>
-			{showIdx ? (
-				<>
-					<br />
-					rowIdx = {rowIdx}
-					<br />
-				</>
-			) : (
-				<></>
-			)}
-		</div>
-	);
-	const AddColorRow = ({ rowIdx }) => (
-		<div className="colorRow">
-			<div className="colorCell">
-				<AddColorBtn rowIdx={rowIdx} />
-			</div>
-		</div>
-	);
-	const AddColorCol = ({ rowIdx, colIdx }) => (
-		<div className="buttonRow">
-			<button onClick={() => handleAddColorColumn(rowIdx, colIdx)}>
+			<button onClick={() => handleAddColor(rowIdx, colIdx)}>
 				Add Color
 			</button>
 			{showIdx ? (
-				<>
+				<div className="idx">
 					<br />
 					rowIdx = {rowIdx}
 					<br />
 					colIdx = {colIdx}
-				</>
+					<br />
+				</div>
 			) : (
 				<></>
 			)}
+		</div>
+	);
+	const AddColorRow = ({ rowIdx, colIdx }) => (
+		<div className="colorRow">
+			<div className="colorCell"></div>
+			<div className="colorCell">
+				<AddColorBtn rowIdx={rowIdx} colIdx={colIdx ?? 0} />
+			</div>
 		</div>
 	);
 	const DeleteColor = ({ rowIdx, colIdx }) => (
@@ -143,12 +166,12 @@ export default function Colors() {
 				Delete
 			</button>
 			{showIdx ? (
-				<>
+				<div className="idx">
 					<br />
 					rowIdx = {rowIdx}
 					<br />
 					colIdx = {colIdx}
-				</>
+				</div>
 			) : (
 				<></>
 			)}
@@ -159,46 +182,22 @@ export default function Colors() {
 
 	const DisplayColorList = () => {
 		return colorListKeys.map((rowIdx, i) => {
-			const colorRow = colorList[rowIdx],
-				rowKeyIdx = rowIdx + 0.5,
-				colIdx = 0;
+			const rowKeyIdx = rowIdx + 0.5;
 			return (
 				<Fragment key={i}>
 					{/* Display color row */}
 					{Math.round(rowIdx) === rowIdx ? (
-						<ColorRow rowIdx={rowIdx} colorRow={colorRow} />
+						<ColorRow rowIdx={rowIdx} />
 					) : (
 						<></>
 					)}
 
 					{/* Display Add color in-between each color row */}
-					{keyFrames[rowKeyIdx] && keyFrames[rowKeyIdx][0] ? (
-						<DisplayColorKeys
-							rowStartKeyIdx={rowKeyIdx}
-							colStartKeyIdx={colIdx}
-							rowEndKeyIdx={rowKeyIdx + 1}
-							colEndKeyIdx={colIdx}
+					{rowIdx < totalRows - 1 ? (
+						<ColorRowInBetween
+							rowIdx={rowIdx}
+							rowKeyIdx={rowKeyIdx}
 						/>
-					) : rowIdx < totalRows - 1 ? (
-						<div className="colorRow">
-							<div className="colorCell">
-								<AddKeyBtn
-									rowIdx={rowKeyIdx}
-									colIdx={colIdx}
-									handleAddKeyFrame={handleAddKeyFrame}
-								/>
-								{showIdx ? (
-									<>
-										rowIdx = {rowKeyIdx}
-										<br />
-										colIdx = {colIdx}
-									</>
-								) : (
-									<></>
-								)}
-								<AddColorBtn rowIdx={rowIdx} />
-							</div>
-						</div>
 					) : (
 						<></>
 					)}
@@ -207,15 +206,16 @@ export default function Colors() {
 		});
 	};
 
-	const ColorRow = ({ rowIdx, colorRow }) => {
-		const rowEntries = Object.entries(colorRow);
-		const totalColumns = Object.keys(colorList[rowIdx]).length;
+	const ColorRow = ({ rowIdx }) => {
+		const colorRow = colorList[rowIdx],
+			rowEntries = Object.entries(colorRow),
+			totalColumns = Object.keys(colorList[rowIdx]).length;
 		return (
 			<div className="colorRow">
 				{/* Display Add Color at first col */}
 				{totalColumns < maxColumns ? (
 					<div className="colorCell">
-						<AddColorCol rowIdx={rowIdx} colIdx={0} />
+						<AddColorBtn rowIdx={rowIdx} colIdx={0} />
 					</div>
 				) : (
 					<></>
@@ -225,63 +225,25 @@ export default function Colors() {
 				{rowEntries.length > 0 ? (
 					rowEntries.map(([colIdx, cellColor], i) => {
 						colIdx = parseFloat(colIdx);
+						const colKeyIdx = colIdx + 1;
+						const rowKeyIdx = rowIdx;
 						return (
 							<Fragment key={colIdx}>
-								{/* Display color input */}
-								<div className="colorCell">
-									{cellColor.isMarked ? (
-										<input
-											type="color"
-											value={
-												cellColor
-													? cellColor.color
-													: null
-											}
-											onChange={(e) =>
-												handleColorChange(
-													e.target.value,
-													rowIdx,
-													colIdx
-												)
-											}
-										/>
-									) : (
-										<div
-											style={{
-												height: "32px",
-												width: "64px",
-												backgroundColor:
-													cellColor.color,
-											}}
-										></div>
-									)}
-									<ColorGrid cellColor={cellColor} />
-									<DeleteColor
-										rowIdx={rowIdx}
-										colIdx={colIdx}
-									/>
-								</div>
+								{/* Display color detail (select) */}
+								<ColorDetail
+									cellColor={cellColor}
+									rowIdx={rowIdx}
+									colIdx={colIdx}
+								/>
 
 								{/* Display add colors in-between inputs */}
-								{keyFrames[rowIdx] &&
-								keyFrames[rowIdx][colIdx] ? (
-									<div className="colorCell">
-										{keyFrames[rowIdx][0]}
-									</div>
-								) : i < totalColumns - 1 ? (
-									<div className="colorCell">
-										<AddKeyBtn
-											rowIdx={rowIdx}
-											colIdx={colIdx}
-											handleAddKeyFrame={
-												handleAddKeyFrame
-											}
-										/>
-										<AddColorCol
-											rowIdx={rowIdx}
-											colIdx={colIdx}
-										/>
-									</div>
+								{i < totalColumns - 1 ? (
+									<ColorInBetween
+										rowIdx={rowIdx}
+										rowKeyIdx={rowKeyIdx}
+										colIdx={colIdx}
+										colKeyIdx={colKeyIdx}
+									/>
 								) : (
 									<></>
 								)}
@@ -295,7 +257,7 @@ export default function Colors() {
 				{/* Display Add Color at last col */}
 				{totalColumns > 0 && totalColumns < maxColumns ? (
 					<div className="colorCell">
-						<AddColorCol rowIdx={rowIdx} colIdx={totalColumns} />
+						<AddColorBtn rowIdx={rowIdx} colIdx={totalColumns} />
 					</div>
 				) : (
 					<></>
@@ -303,7 +265,261 @@ export default function Colors() {
 			</div>
 		);
 	};
+	const ColorRowInBetween = ({ rowIdx, rowKeyIdx }) => {
+		const colorRow =
+				colorList[
+					Math.min(
+						Object.keys(colorList[rowIdx]) <
+							Object.keys(colorList[rowIdx + 1])
+					)
+						? rowIdx
+						: rowIdx + 1
+				],
+			rowKeys = Object.keys(colorRow)
+				.map((x) => parseFloat(x))
+				.sort((a, b) => a > b);
 
+		return (
+			<div className="colorRow">
+				{rowKeys.length > 0 ? (
+					rowKeys.map((colIdx, i) => {
+						colIdx = parseFloat(colIdx);
+						const colKeyIdx = colIdx;
+						return (
+							<>
+								<div className="colorCell"></div>
+								<div className="colorCell">
+									<ColorInBetween
+										rowIdx={rowIdx}
+										rowKeyIdx={rowKeyIdx}
+										colIdx={colIdx}
+										colKeyIdx={colKeyIdx}
+									/>
+								</div>
+							</>
+						);
+					})
+				) : (
+					<></>
+				)}
+			</div>
+		);
+	};
+
+	const ColorInBetween = ({ rowIdx, rowKeyIdx, colIdx, colKeyIdx }) => {
+		return (
+			<div className="colorCell">
+				{keyFrames[rowKeyIdx] && keyFrames[rowKeyIdx][colKeyIdx] ? (
+					keyFrameEditing &&
+					keyFrameEditing.rowIdx === rowKeyIdx &&
+					keyFrameEditing.colIdx === colKeyIdx ? (
+						<AddKeyBtn
+							value={keyFrames[rowKeyIdx][colKeyIdx]}
+							rowIdx={rowKeyIdx}
+							colIdx={colKeyIdx}
+							handleAddKeyFrame={handleAddKeyFrame}
+							handleCancel={handleEditKeyCancel}
+						/>
+					) : (
+						<DisplayColorKeys
+							rowStartKeyIdx={rowKeyIdx}
+							colStartKeyIdx={colKeyIdx}
+							rowEndKeyIdx={
+								rowKeyIdx + (rowIdx === rowKeyIdx ? 0 : 1)
+							}
+							colEndKeyIdx={
+								colKeyIdx + (rowIdx === rowKeyIdx ? 1 : 0)
+							}
+						/>
+					)
+				) : (
+					<>
+						<AddKeyBtn
+							value={""}
+							rowIdx={rowKeyIdx}
+							colIdx={colKeyIdx}
+							handleAddKeyFrame={handleAddKeyFrame}
+						/>
+
+						<AddColorBtn rowIdx={rowKeyIdx} colIdx={colKeyIdx} />
+					</>
+				)}
+				{showIdx ? (
+					<div className="idx">
+						<br />
+						ColorInBetween
+						<br />
+						rowIdx = {rowIdx}
+						<br />
+						colIdx = {colIdx}
+						<br />
+						rowKeyIdx = {rowKeyIdx}
+						<br />
+						colKeyIdx = {colKeyIdx}
+					</div>
+				) : (
+					<></>
+				)}
+			</div>
+		);
+	};
+	const DisplayColorKeys = ({
+		rowStartKeyIdx,
+		colStartKeyIdx,
+		rowEndKeyIdx,
+		colEndKeyIdx,
+	}) => {
+		const keyFrame = keyFrames[rowStartKeyIdx][colStartKeyIdx],
+			rowStartIdx =
+				rowStartKeyIdx -
+				(rowStartKeyIdx !== Math.round(rowStartKeyIdx) ? 0.5 : 0),
+			colStartIdx =
+				colStartKeyIdx - (rowStartKeyIdx === rowEndKeyIdx ? 1 : 0),
+			rowEndIdx =
+				rowEndKeyIdx -
+				(rowEndKeyIdx !== Math.round(rowEndKeyIdx) ? 0.5 : 0),
+			colEndIdx =
+				colEndKeyIdx - (rowStartKeyIdx === rowEndKeyIdx ? 1 : 0);
+
+		const startColor = colorList[rowStartIdx][colStartIdx],
+			endColor = colorList[rowEndIdx][colEndIdx];
+		console.log(
+			" keyFrame: ",
+			keyFrame,
+			" rowStartIdx: ",
+			rowStartIdx,
+			" colStartIdx: ",
+			colStartIdx,
+			" rowEndIdx: ",
+			rowEndIdx,
+			" colEndIdx: ",
+			colEndIdx,
+			" startColor: ",
+			startColor,
+			" endColor: ",
+			endColor
+		);
+
+		// if colors
+		const isBothColors =
+			startColor &&
+			startColor.r >= 0 &&
+			startColor.g >= 0 &&
+			startColor.b >= 0 &&
+			endColor &&
+			endColor.r >= 0 &&
+			endColor.g >= 0 &&
+			endColor.b >= 0;
+		let diff = { r: 0, g: 0, b: 0 },
+			slice = { r: 0, g: 0, b: 0 },
+			direction = { r: 0, g: 0, b: 0 };
+		if (isBothColors) {
+			diff = {
+				r: Math.abs(startColor.r - endColor.r),
+				g: Math.abs(startColor.g - endColor.g),
+				b: Math.abs(startColor.b - endColor.b),
+			};
+			slice = {
+				r: diff.r / (keyFrame + 1),
+				g: diff.g / (keyFrame + 1),
+				b: diff.b / (keyFrame + 1),
+			};
+			direction = {
+				r: startColor.r < endColor.r ? 1 : -1,
+				g: startColor.g < endColor.g ? 1 : -1,
+				b: startColor.b < endColor.b ? 1 : -1,
+			};
+		}
+
+		return (
+			<div className="keyFramesCell">
+				<div className="keyFrames">
+					{[...Array(keyFrame).keys()].map((key) => {
+						const color = isBothColors
+							? `rgb(${
+									startColor.r +
+									direction.r * slice.r * (key + 1)
+							  }, ${
+									startColor.g +
+									direction.g * slice.g * (key + 1)
+							  }, ${
+									startColor.b +
+									direction.b * slice.b * (key + 1)
+							  })`
+							: defaultColor;
+
+						return (
+							<div
+								key={key}
+								className="keyFrame"
+								style={{ backgroundColor: color }}
+							></div>
+						);
+					})}
+				</div>
+				<div>
+					{keyFrame}
+
+					<button
+						onClick={() =>
+							handleAddKeyFrame(
+								rowStartKeyIdx,
+								colStartKeyIdx,
+								keyFrame + 1
+							)
+						}
+					>
+						+
+					</button>
+					<button
+						onClick={() =>
+							handleAddKeyFrame(
+								rowStartKeyIdx,
+								colStartKeyIdx,
+								keyFrame - 1
+							)
+						}
+					>
+						-
+					</button>
+
+					<button
+						onClick={() =>
+							setKeyFrameEditing({
+								rowIdx: rowStartKeyIdx,
+								colIdx: colStartKeyIdx,
+							})
+						}
+					>
+						Edit
+					</button>
+				</div>
+			</div>
+		);
+	};
+	const ColorDetail = ({ cellColor, rowIdx, colIdx }) => (
+		<div className="colorCell">
+			{cellColor.isMarked ? (
+				<input
+					type="color"
+					value={cellColor ? cellColor.color : null}
+					onChange={(e) =>
+						handleColorChange(e.target.value, rowIdx, colIdx)
+					}
+				/>
+			) : (
+				<div
+					style={{
+						height: "32px",
+						width: "64px",
+						backgroundColor: cellColor.color,
+					}}
+				></div>
+			)}
+			<ColorGrid cellColor={cellColor} />
+			<DeleteColor rowIdx={rowIdx} colIdx={colIdx} />
+		</div>
+	);
 	const ColorGrid = ({ cellColor: { color, r, g, b } }) => (
 		<div className="colorGrid">
 			<div>
@@ -356,80 +572,6 @@ export default function Colors() {
 	</div> */}
 		</div>
 	);
-
-	const DisplayColorKeys = ({
-		rowStartKeyIdx,
-		colStartKeyIdx,
-		rowEndKeyIdx,
-		colEndKeyIdx,
-	}) => {
-		const keyFrame = keyFrames[rowStartKeyIdx][colStartKeyIdx],
-			rowStartIdx = rowStartKeyIdx - 0.5,
-			colStartIdx = colStartKeyIdx,
-			rowEndIdx = rowEndKeyIdx - 0.5,
-			colEndIdx = colEndKeyIdx,
-			startColor = colorList[rowStartIdx][colStartIdx],
-			endColor = colorList[rowEndIdx][colEndIdx];
-
-		// if colors
-		const isBothColors =
-			startColor &&
-			startColor.r >= 0 &&
-			startColor.g >= 0 &&
-			startColor.b >= 0 &&
-			endColor &&
-			endColor.r >= 0 &&
-			endColor.g >= 0 &&
-			endColor.b >= 0;
-		let diffR = 0,
-			diffG = 0,
-			diffB = 0,
-			sliceR = 0,
-			sliceG = 0,
-			sliceB = 0,
-			directionR = 0,
-			directionG = 0,
-			directionB = 0;
-		if (isBothColors) {
-			diffR = Math.abs(startColor.r - endColor.r);
-			diffG = Math.abs(startColor.g - endColor.g);
-			diffB = Math.abs(startColor.b - endColor.b);
-			sliceR = diffR / keyFrame;
-			sliceG = diffG / keyFrame;
-			sliceB = diffB / keyFrame;
-			directionR = startColor.r < endColor.r ? 1 : -1;
-			directionG = startColor.g < endColor.g ? 1 : -1;
-			directionB = startColor.b < endColor.b ? 1 : -1;
-		}
-
-		return (
-			<div className="colorRow">
-				<div className="colorCell">
-					<div className="keyFrames">
-						{[...Array(keyFrame).keys()].map((key) => {
-							const color = isBothColors
-								? `rgb(${
-										startColor.r + directionR * sliceR * key
-								  }, ${
-										startColor.g + directionG * sliceG * key
-								  }, ${
-										startColor.b + directionB * sliceB * key
-								  })`
-								: defaultColor;
-
-							return (
-								<div
-									key={key}
-									className="keyFrame"
-									style={{ backgroundColor: color }}
-								></div>
-							);
-						})}
-					</div>
-				</div>
-			</div>
-		);
-	};
 
 	const Options = () => (
 		<>
@@ -509,16 +651,20 @@ export default function Colors() {
 
 	return (
 		<div className="colors3">
-			<div>
+			<div className="colors">
 				{/* Display Add Color at row 0 */}
-				{totalRows < maxRows ? <AddColorRow rowIdx={0} /> : <></>}
+				{totalRows < maxRows ? (
+					<AddColorRow rowIdx={-0.5} colIdx={0} />
+				) : (
+					<></>
+				)}
 
 				{/* Display all color rows */}
 				<DisplayColorList />
 
 				{/* Display Add Color at last row */}
 				{totalRows > 0 && totalRows < maxRows ? (
-					<AddColorRow rowIdx={totalRows} />
+					<AddColorRow rowIdx={totalRows} colIdx={0} />
 				) : (
 					<></>
 				)}

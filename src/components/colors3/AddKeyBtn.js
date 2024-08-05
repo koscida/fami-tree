@@ -1,7 +1,13 @@
 import { useState } from "react";
 
-export default function AddKeyBtn({ rowIdx, colIdx, handleAddKeyFrame }) {
-	const [keyFrameEdit, setKeyFrameEdit] = useState("");
+export default function AddKeyBtn({
+	value,
+	rowIdx,
+	colIdx,
+	handleAddKeyFrame,
+	handleCancel,
+}) {
+	const [keyFrameEdit, setKeyFrameEdit] = useState(value);
 
 	return (
 		<div className="buttonRow inputRow">
@@ -22,8 +28,13 @@ export default function AddKeyBtn({ rowIdx, colIdx, handleAddKeyFrame }) {
 						)
 					}
 				>
-					Add Key Frame
+					Save
 				</button>
+				{value > 0 ? (
+					<button onClick={handleCancel}>Cancel</button>
+				) : (
+					<></>
+				)}
 			</div>
 		</div>
 	);
