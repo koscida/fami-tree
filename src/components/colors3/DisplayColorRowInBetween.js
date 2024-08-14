@@ -1,20 +1,10 @@
 import { Fragment } from "react";
 import CellColorInBetween from "./component/CellColorInBetween";
+import { useColorContext } from "./ColorContext";
 
-export default function DisplayColorRowInBetween({
-	rowIdx,
-	rowKeyIdx,
-	colorList,
-	keyFrames,
-	keyFrameEditing,
-	handleAddColor,
-	handleColorChange,
-	handleDeleteColor,
-	handleAddKeyFrame,
-	handleEditKeyCancel,
-	setKeyFrameEditing,
-	options,
-}) {
+export default function DisplayColorRowInBetween({ rowIdx, rowKeyIdx }) {
+	const { colorList } = useColorContext();
+
 	const colorRow =
 		colorList[
 			Object.keys(colorList[rowIdx]).length <
@@ -41,14 +31,6 @@ export default function DisplayColorRowInBetween({
 									rowKeyIdx={rowKeyIdx}
 									colIdx={colIdx}
 									colKeyIdx={colKeyIdx}
-									colorList={colorList}
-									keyFrames={keyFrames}
-									keyFrameEditing={keyFrameEditing}
-									handleAddColor={handleAddColor}
-									handleAddKeyFrame={handleAddKeyFrame}
-									handleEditKeyCancel={handleEditKeyCancel}
-									setKeyFrameEditing={setKeyFrameEditing}
-									options={options}
 								/>
 							</div>
 						</Fragment>

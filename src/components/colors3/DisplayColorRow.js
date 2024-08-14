@@ -1,24 +1,13 @@
 import { Fragment } from "react";
 import AddColorBtn from "./component/AddColorBtn";
-import AddKeyBtn from "./component/AddKeyBtn";
 import DeleteColor from "./component/DeleteColor";
 import ColorGrid from "./component/ColorGrid";
 import CellColorInBetween from "./component/CellColorInBetween";
+import { useColorContext } from "./ColorContext";
 
-export default function DisplayColorRow({
-	rowIdx,
-	colorList,
-	keyFrames,
-	keyFrameEditing,
-	handleAddColor,
-	handleColorChange,
-	handleDeleteColor,
-	handleAddKeyFrame,
-	handleEditKeyCancel,
-	setKeyFrameEditing,
-	options,
-}) {
-	const { maxColumns, showIdx, defaultColor } = options;
+export default function DisplayColorRow({ rowIdx }) {
+	const { colorList, maxColumns, handleColorChange } = useColorContext();
+
 	const colorRow = colorList[rowIdx],
 		rowEntries = Object.entries(colorRow),
 		totalColumns = Object.keys(colorList[rowIdx]).length;
@@ -44,12 +33,7 @@ export default function DisplayColorRow({
 			)}
 			<ColorGrid cellColor={cellColor} />
 
-			<DeleteColor
-				rowIdx={rowIdx}
-				colIdx={colIdx}
-				handleDeleteColor={handleDeleteColor}
-				options={options}
-			/>
+			<DeleteColor rowIdx={rowIdx} colIdx={colIdx} />
 		</div>
 	);
 
@@ -58,12 +42,7 @@ export default function DisplayColorRow({
 			{/* Display Add Color at first col */}
 			{totalColumns < maxColumns ? (
 				<div className="colorCell">
-					<AddColorBtn
-						rowIdx={rowIdx}
-						colIdx={0}
-						handleAddColor={handleAddColor}
-						options={options}
-					/>
+					<AddColorBtn rowIdx={rowIdx} colIdx={0} />
 				</div>
 			) : (
 				<></>
@@ -91,14 +70,6 @@ export default function DisplayColorRow({
 									rowKeyIdx={rowKeyIdx}
 									colIdx={colIdx}
 									colKeyIdx={colKeyIdx}
-									colorList={colorList}
-									keyFrames={keyFrames}
-									keyFrameEditing={keyFrameEditing}
-									handleAddColor={handleAddColor}
-									handleAddKeyFrame={handleAddKeyFrame}
-									handleEditKeyCancel={handleEditKeyCancel}
-									setKeyFrameEditing={setKeyFrameEditing}
-									options={options}
 								/>
 							) : (
 								<></>
@@ -113,12 +84,7 @@ export default function DisplayColorRow({
 			{/* Display Add Color at last col */}
 			{totalColumns > 0 && totalColumns < maxColumns ? (
 				<div className="colorCell">
-					<AddColorBtn
-						rowIdx={rowIdx}
-						colIdx={totalColumns}
-						handleAddColor={handleAddColor}
-						options={options}
-					/>
+					<AddColorBtn rowIdx={rowIdx} colIdx={totalColumns} />
 				</div>
 			) : (
 				<></>

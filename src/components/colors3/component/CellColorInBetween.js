@@ -1,3 +1,4 @@
+import { useColorContext } from "../ColorContext";
 import AddColorBtn from "./AddColorBtn";
 import AddKeyBtn from "./AddKeyBtn";
 
@@ -6,16 +7,16 @@ export default function CellColorInBetween({
 	rowKeyIdx,
 	colIdx,
 	colKeyIdx,
-	colorList,
-	keyFrames,
-	keyFrameEditing,
-	handleAddColor,
-	handleAddKeyFrame,
-	handleEditKeyCancel,
-	setKeyFrameEditing,
-	options,
 }) {
-	const { showIdx, defaultColor } = options;
+	const {
+		colorList,
+		keyFrames,
+		showIdx,
+		defaultColor,
+		handleAddKeyFrame,
+		keyFrameEditing,
+		setKeyFrameEditing,
+	} = useColorContext();
 
 	const ColorKeys = ({
 		rowStartKeyIdx,
@@ -162,8 +163,6 @@ export default function CellColorInBetween({
 						value={keyFrames[rowKeyIdx][colKeyIdx]}
 						rowIdx={rowKeyIdx}
 						colIdx={colKeyIdx}
-						handleAddKeyFrame={handleAddKeyFrame}
-						handleCancel={handleEditKeyCancel}
 					/>
 				) : (
 					<ColorKeys
@@ -183,15 +182,9 @@ export default function CellColorInBetween({
 						value={""}
 						rowIdx={rowKeyIdx}
 						colIdx={colKeyIdx}
-						handleAddKeyFrame={handleAddKeyFrame}
 					/>
 
-					<AddColorBtn
-						rowIdx={rowKeyIdx}
-						colIdx={colKeyIdx}
-						handleAddColor={handleAddColor}
-						options={options}
-					/>
+					<AddColorBtn rowIdx={rowKeyIdx} colIdx={colKeyIdx} />
 				</>
 			)}
 			{showIdx ? (

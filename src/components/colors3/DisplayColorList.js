@@ -4,20 +4,11 @@ import AddKeyBtn from "./component/AddKeyBtn";
 import DeleteColor from "./component/DeleteColor";
 import DisplayColorRow from "./DisplayColorRow";
 import DisplayColorRowInBetween from "./DisplayColorRowInBetween";
+import { useColorContext } from "./ColorContext";
 
-export default function DisplayColorList({
-	colorList,
-	keyFrames,
-	keyFrameEditing,
-	handleAddColor,
-	handleColorChange,
-	handleDeleteColor,
-	handleAddKeyFrame,
-	handleEditKeyCancel,
-	setKeyFrameEditing,
-	options,
-}) {
-	const { showIdx, maxColumns } = options;
+export default function DisplayColorList() {
+	const { colorList } = useColorContext();
+
 	const colorListKeys = Object.keys(colorList)
 		.map((x) => parseFloat(x))
 		.sort((a, b) => a > b);
@@ -31,19 +22,7 @@ export default function DisplayColorList({
 			<Fragment key={i}>
 				{/* Display color row */}
 				{Math.round(rowIdx) === rowIdx ? (
-					<DisplayColorRow
-						rowIdx={rowIdx}
-						colorList={colorList}
-						keyFrames={keyFrames}
-						keyFrameEditing={keyFrameEditing}
-						handleAddColor={handleAddColor}
-						handleColorChange={handleColorChange}
-						handleDeleteColor={handleDeleteColor}
-						handleAddKeyFrame={handleAddKeyFrame}
-						handleEditKeyCancel={handleEditKeyCancel}
-						setKeyFrameEditing={setKeyFrameEditing}
-						options={options}
-					/>
+					<DisplayColorRow rowIdx={rowIdx} />
 				) : (
 					<></>
 				)}
@@ -53,16 +32,6 @@ export default function DisplayColorList({
 					<DisplayColorRowInBetween
 						rowIdx={rowIdx}
 						rowKeyIdx={rowKeyIdx}
-						colorList={colorList}
-						keyFrames={keyFrames}
-						keyFrameEditing={keyFrameEditing}
-						handleAddColor={handleAddColor}
-						handleColorChange={handleColorChange}
-						handleDeleteColor={handleDeleteColor}
-						handleAddKeyFrame={handleAddKeyFrame}
-						handleEditKeyCancel={handleEditKeyCancel}
-						setKeyFrameEditing={setKeyFrameEditing}
-						options={options}
 					/>
 				) : (
 					<></>

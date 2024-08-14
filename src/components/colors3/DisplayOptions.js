@@ -1,5 +1,7 @@
-export default function DisplayOptions({
-	options: {
+import { useColorContext } from "./ColorContext";
+
+export default function DisplayOptions() {
+	const {
 		maxColumns,
 		setMaxColumns,
 		maxRows,
@@ -11,8 +13,8 @@ export default function DisplayOptions({
 		setDefaultColor,
 		showIdx,
 		setShowIdx,
-	},
-}) {
+	} = useColorContext();
+
 	return (
 		<>
 			<div className="inputRow">

@@ -1,9 +1,7 @@
-export default function DeleteColor({
-	rowIdx,
-	colIdx,
-	handleDeleteColor,
-	options: { showIdx },
-}) {
+import { useColorContext } from "../ColorContext";
+
+export default function DeleteColor({ rowIdx, colIdx }) {
+	const { handleDeleteColor, showIdx } = useColorContext();
 	return (
 		<div className="buttonRow">
 			<button onClick={() => handleDeleteColor(rowIdx, colIdx)}>

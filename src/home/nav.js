@@ -8,6 +8,7 @@ import Quilt from "../components/quilt/Quilt";
 import Quilt2 from "../components/quilt2/Quilt2";
 import Flow from "../components/flow/Flow";
 import Home from "./Home";
+import Oly from "../components/oly/Oly";
 
 const routes = [
 	{
@@ -53,6 +54,11 @@ const routes = [
 	{
 		path: "/flow",
 		element: <Flow />,
+		name: "Flow",
+	},
+	{
+		path: "/oly",
+		element: <Oly />,
 		name: "Flow",
 	},
 ];

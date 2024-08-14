@@ -1,12 +1,8 @@
 import { useState } from "react";
+import { useColorContext } from "../ColorContext";
 
-export default function AddKeyBtn({
-	value,
-	rowIdx,
-	colIdx,
-	handleAddKeyFrame,
-	handleCancel,
-}) {
+export default function AddKeyBtn({ value, rowIdx, colIdx }) {
+	const { handleAddKeyFrame, handleEditKeyCancel } = useColorContext();
 	const [keyFrameEdit, setKeyFrameEdit] = useState(value);
 
 	return (
@@ -31,7 +27,7 @@ export default function AddKeyBtn({
 					Save
 				</button>
 				{value > 0 ? (
-					<button onClick={handleCancel}>Cancel</button>
+					<button onClick={handleEditKeyCancel}>Cancel</button>
 				) : (
 					<></>
 				)}

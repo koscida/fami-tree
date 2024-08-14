@@ -1,12 +1,10 @@
 import { Fragment } from "react";
 import AddColorBtn from "./component/AddColorBtn";
+import { useColorContext } from "./ColorContext";
 
-export default function DisplayAddColorRow({
-	rowIdx,
-	colorList,
-	handleAddColor,
-	options,
-}) {
+export default function DisplayAddColorRow({ rowIdx }) {
+	const { colorList } = useColorContext();
+
 	const rowColorIdx =
 		rowIdx + (Math.ceil(rowIdx) !== Math.floor(rowIdx) ? 0.5 : -1);
 	console.log(
@@ -31,12 +29,7 @@ export default function DisplayAddColorRow({
 						<Fragment key={i}>
 							<div className="colorCell"></div>
 							<div className="colorCell">
-								<AddColorBtn
-									rowIdx={rowIdx}
-									colIdx={colIdx}
-									handleAddColor={handleAddColor}
-									options={options}
-								/>
+								<AddColorBtn rowIdx={rowIdx} colIdx={colIdx} />
 							</div>
 						</Fragment>
 					);
